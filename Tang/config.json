@@ -1,0 +1,243 @@
+{
+ "sites": [
+ {
+			"key": "js_douban",
+			"name": "豆瓣(js)",
+			"type": 3,
+			"api": "./js/douban_min.js",
+			"searchable": 0,
+			"quickSearch": 0,
+			"filterable": 1,
+			"changeable": 0
+		},
+		{
+      "key": "py_UVod",
+      "name": "UVod(T3)",
+      "type": 3,
+      "api": "./py/UVod.py",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0,
+      "changeable": 0
+    },
+    {
+      "key": "py_aigua",
+      "name": "爱瓜(T3)",
+      "type": 3,
+      "api": "./py/爱瓜.py",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1,
+      "changeable": 0
+    },
+    {
+      "key": "py_jieyingshi",
+      "name": "界影视(T3)",
+      "type": 3,
+      "api": "./py/py_jieyingshi.py",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0,
+      "changeable": 0
+    },
+    {
+			"key": "八戒影视",
+			"name": "八戒影视(py)",
+			"type": 3,
+			"api": "./py/八戒影视.py"
+		},
+		{
+			"key": "永乐视频",
+			"name": "永乐视频(py)",
+			"type": 3,
+			"api": "./py/永乐视频.py"
+		},
+		{
+			"key": "两个bt",
+			"name": "两个bt(py)",
+			"type": 3,
+			"api": "./py/两个bt.py"
+		},
+		{
+      "key": "爱看机器人_js羊",
+      "name": "🚒爱看┃（羊）",
+      "type": 3,
+      "api": "./js/爱看机器人.js"
+    },
+    {
+			"key": "金牌影院_js",
+			"name": "金牌影院JS",
+			"type": 3,
+			"api": "./js/金牌影院.js"
+		},
+        {
+            "api": "./js/独播库.js",
+            "key": "js_独播库JS",
+            "name": "独播库JS",
+            "type": 3
+        },
+        {
+            "api": "./js/荐片.js",
+            "key": "js_荐片JS",
+            "name": "荐片JS",
+            "type": 3
+        },
+	{
+            "key": "快映",
+            "name": "💝分享快映",
+            "type": 3,
+            "changeable": 0,
+            "api": "./js/快映.js",
+            "ext": {
+                "host": "https://www.baidukuaiy.top",
+                "ver": 3
+            }
+        },
+        {
+            "key": "789",
+            "name": "💝分享酒吧",
+            "type": 1,
+            "api": "https://www.caiji.cyou/api.php/provide/vod",
+            "searchable": 1,
+            "playUrl": "json:https://json.cfysoft.cc/api/?key=5249e5bb3cb34032040224799dae6d45&url=",
+            "changeable": 1,
+            "quickSearch": 1,
+            "filterable": 0
+        },
+	{"key":"fxz小猫咪","name":"💖分享猫咪","type":1,"api":"http://zy.xiaomaomi.cc/api.php/provide/vod/","playUrl": "json:https://api.jxapi.cc/api/?key=87169fe0f2971cedba3d7c9d6718882e&url="
+},
+{
+            "key": "猫头鹰",
+            "name": "💝分享蓝鹰",
+            "type": 3,
+            "api": "./js/get.js",
+            "searchable": 1,
+            "ext": {
+                "host": "https://xinlanyinghb.oss-cn-wuhan-lr.aliyuncs.com/xly.txt",
+                "key": "ca94b06ca359d80e",
+                "init": "V122",
+                "api": 2,
+                "ua": "okhttp/3.10.0"
+            }
+        },
+ {
+            "key": "奇奇1",
+            "name": "💝分享奇奇",
+            "type": 3,
+            "api": "./js/奇奇.js",
+            "searchable": 1,
+            "ext": {
+                "host": "http://110.42.67.221:8003/",
+                "key": "123456789abcdefg",
+                "init": "V122",
+                "api": 2,
+                "ua": "okhttp/3.10.0"
+            },
+            "categories": [
+                "电视剧",
+                "综艺",
+                "短剧",
+                "动漫",
+                "少儿",
+                "学习"
+            ]
+        },
+         {
+            "key": "布布",
+            "name": "💝分享布布",
+            "type": 3,
+            "api": "./js/布布.js",
+            "style": {
+                "type": "rect",
+                "ratio": 1.33
+            },
+            "changeable": 1
+        },
+
+	 {
+            "key": "1剧吧",
+            "name": "💝分享剧吧",
+            "type": 3,
+            "api": "./py/JB.py"
+        },
+       {
+            "key": "橘子",
+            "name": "💝分享橘子",
+            "type": 3,
+            "api": "./py/Fei.py",
+            "ext": "https://dmc.yy-fun.cc/feiapp"
+        },
+        {
+            "name": "🍊橘汁|秒播",
+            "key": "Juzhi",
+            "type": 3,
+            "jar": "./jar/Juzhi_spider.jar",
+            "api": "csp_Juzhi",
+            "searchable": 1,
+            "filterable": 1,
+            "quickSearch": 1,
+            "changeable": 1,
+            "ext": {
+                "host": "",
+                "site": "https://vip.123pan.cn/1848463092/cct/az5.txt",
+                "version": "3.0.1.9"
+            }
+        },
+        {"key":"南瓜","name":"💝分享南瓜","type":3,"api":"csp_NanGua","playerType":2,"jar":"./jar/fxz250711.jar","ext":"7lj763gg0939795i017ii486k512jkihhilg9g0h96j865740113"},
+   {"key":"柠檬","name":"💝分享柠檬","type":3,"api":"csp_Nmvod","playerType":2,"jar": "./jar/fxz250711.jar","ext":"7lj763gg402i7942503g839jg74h8h88highi40799jh6i6k454419l0l5184k0g549h0kg2i01i838i2h42g891lgg1"},
+   {
+    "key": "奇优",
+    
+    "name":"💖分享奇优",
+    
+    "type": 3,
+        "api": "csp_XBPQ",
+        "searchable": 1,
+        "quickSearch": 1,
+        "filterable": 1,
+        "jar":"./jar/xbpq.jar",
+        "ext":{
+    
+    "请求头": "手机",
+    
+    "主页url":"http://www.qiyoudy2.com/",
+    
+    "简介":"&&</div>",
+    
+    "数组":"<div class=\"stui-vodlist__box\">&&</a>",
+    
+    "图片":"data-original=\"&&\"",
+    
+    "标题":"title=\"&&\"",
+    
+    "副标题":"text-right\">&&</span>",
+    
+    "链接":"href=\"&&\"",
+    
+    "搜索url":"http://www.qiyoudy2.com/search.php;post;searchword={wd}",
+    
+    "搜索数组":"v-thumb stui-vodlist__thumb&&</a>",
+    
+    "搜索图片":"data-original=\"&&\"",
+    
+    "搜索标题":"title=\"&&\"",
+    
+    "搜索副标题":"text-right\">&&</span>",
+    
+    "搜索链接":"href=\"&&\"",
+    
+    "线路数组":"data-toggle=\"tab\"&&</li>",
+    
+    "线路标题":">&&</a>",
+    
+    "播放数组":"stui-content__playlist clearfix&&</ul>",
+    
+    "播放列表":"<li>&&</li>",
+    
+    "播放标题":">&&</a>",
+    
+    "分类url":"http://www.qiyoudy2.com/list/{cateId}_{catePg}.html;;ak",
+    
+     "分类":"电影$1#电视剧$2#动漫$3#综艺$4"}}
+]
+}
