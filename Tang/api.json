@@ -1,0 +1,353 @@
+{
+  "sites": [
+        {
+            "key": "js_douban",
+            "name": "豆瓣(js)",
+            "type": 3,
+            "api": "https://gh-proxy.com/https://raw.githubusercontent.com/maoystv/api/refs/heads/main/JS/drpy2.min.js",
+            "searchable": 0,
+            "quickSearch": 0,
+            "filterable": 0,
+            "ext": "https://gh-proxy.com/https://raw.githubusercontent.com/maoystv/TV/refs/heads/master/JS/分享douban.js"
+        },
+        {
+      "key": "js_doubanxx",
+      "name": "豆瓣(js)xx",
+      "type": 3,
+      "api": "https://gh-proxy.com/https://raw.githubusercontent.com/ediart/tvbox/main/lz/douban_min.js",
+      "searchable": 0,
+      "quickSearch": 0,
+      "filterable": 1,
+      "changeable": 0
+    },
+    {
+      "key": "js集合",
+      "name": "js集合",
+      "type": 4,
+      "api": "http://zhangqun1818.serv00.net/js.php",
+      "searchable": 1,
+      "style": {
+        "type": "rect",
+        "ratio": 1.33
+      },
+      "changeable": 1
+    },
+    {
+      "key": "php集合",
+      "name": "php集合",
+      "type": 4,
+      "api": "http://zhangqun1818.serv00.net/php.php",
+      "searchable": 1,
+      "style": {
+        "type": "rect",
+        "ratio": 1.33
+      },
+      "changeable": 1
+    },
+    {
+      "key": "python集合",
+      "name": "python集合",
+      "type": 4,
+      "api": "http://zhangqun1818.serv00.net/py.php",
+      "searchable": 1,
+      "style": {
+        "type": "rect",
+        "ratio": 1.33
+      },
+      "changeable": 1
+    },
+    {
+			"key": "八戒影视",
+			"name": "八戒影视(py)",
+			"type": 3,
+			"api": "https://gh-proxy.com/https://raw.githubusercontent.com/ediart/tvbox/main/lz/py/%E5%85%AB%E6%88%92%E5%BD%B1%E8%A7%86.py"
+		},
+		{
+			"name": "🍈爱瓜|墙外",
+			"key": "AiGua",
+			"type": 3,
+			"api": "csp_AiGuaAmns",
+            "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/alantang1977/X/main/jar/%E5%97%B7%E5%97%9A.png"
+            },
+            {
+            "name": "🥇金牌|秒播",
+            "key": "JinPai",
+            "type": 3,
+            "api": "csp_JinPaiAmns",
+            "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/alantang1977/X/main/jar/%E5%97%B7%E5%97%9A.png"
+        },
+        {
+            "name": "📹U视|墙外",
+            "key": "YouSP",
+            "type": 3,
+            "api": "csp_YouSPAmns",
+            "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/alantang1977/X/main/jar/%E5%97%B7%E5%97%9A.png"
+        },
+        {
+            "name": "🍕欧乐|墙外",
+            "key": "Olyy",
+            "type": 3,
+            "api": "csp_OlyyAmns",
+            "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/alantang1977/X/main/jar/%E5%97%B7%E5%97%9A.png"
+        },
+		{
+			"name": "⛵壹帆|墙外",
+			"key": "Aiyf",
+			"type": 3,
+			"api": "csp_AiyfAmns",
+			"jar": "https://gh-proxy.com/https://raw.githubusercontent.com/alantang1977/X/main/jar/%E5%97%B7%E5%97%9A.png"
+		},	
+  {
+    "key": "py_123TV_php",
+    "name": "123TV_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=123TV"
+  },
+  {
+    "key": "py_4KVM_php",
+    "name": "4KVM_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=4KVM"
+  },
+  {
+    "key": "py_51tv_php",
+    "name": "51tv_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=51tv"
+  },
+  {
+    "key": "py_555影视_php",
+    "name": "555影视_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=555影视"
+  },
+  {
+    "key": "py_55电影_php",
+    "name": "55电影_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=55电影"
+  },
+  {
+    "key": "py_freeok_php",
+    "name": "freeok_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=freeok"
+  },
+  {
+    "key": "py_两个bt_php",
+    "name": "两个bt_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=两个bt"
+  },
+  {
+    "key": "py_动漫巴士_php",
+    "name": "动漫巴士_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=动漫巴士"
+  },
+  {
+    "key": "py_努努影院_php",
+    "name": "努努影院_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=努努影院"
+  },
+  {
+    "key": "py_华视_php",
+    "name": "华视_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=华视"
+  },
+  {
+    "key": "py_华视影院_php",
+    "name": "华视影院_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=华视影院"
+  },
+  {
+    "key": "py_土豆浏览器_php",
+    "name": "土豆浏览器_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=土豆浏览器"
+  },
+  {
+    "key": "py_在线之家_php",
+    "name": "在线之家_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=在线之家"
+  },
+  {
+    "key": "py_天空影视_php",
+    "name": "天空影视_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=天空影视"
+  },
+  {
+    "key": "py_映像星球_php",
+    "name": "映像星球_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=映像星球"
+  },
+  {
+    "key": "py_永乐视频_php",
+    "name": "py永乐视频_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=永乐视频"
+  },
+  {
+    "key": "py_河马短剧_php",
+    "name": "河马短剧_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=河马短剧"
+  },
+  {
+    "key": "py_爱瓜影视_php",
+    "name": "爱瓜影视_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=爱瓜影视"
+  },
+  {
+    "key": "py_独播库_php",
+    "name": "py独播库_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=独播库"
+  },
+  {
+    "key": "py_电影人生_php",
+    "name": "电影人生_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=电影人生"
+  },
+  {
+    "key": "py_看片狂人_php",
+    "name": "看片狂人_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=看片狂人"
+  },
+  {
+    "key": "py_达达龟影院_php",
+    "name": "达达龟影院_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=达达龟影院"
+  },
+  {
+    "key": "py_UVod_php",
+    "name": "UVod_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:5052/?sp=UVod"
+  },
+  {
+    "key": "js_247看_php",
+    "name": "247看_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=247看"
+  },
+  {
+    "key": "js_ppnix_php",
+    "name": "ppnix_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=ppnix"
+  },
+  {
+    "key": "js_七猫短剧_php",
+    "name": "七猫短剧_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=七猫短剧"
+  },
+  {
+    "key": "js_兔小贝_php",
+    "name": "兔小贝_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=兔小贝"
+  },
+  {
+    "key": "js_凡客tv_php",
+    "name": "凡客tv_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=凡客tv"
+  },
+  {
+    "key": "js_凤凰fm_php",
+    "name": "凤凰fm_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=凤凰fm"
+  },
+  {
+    "key": "js_剧海大全_php",
+    "name": "剧海大全_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=剧海大全"
+  },
+  {
+    "key": "js_毒舌影视_php",
+    "name": "毒舌影视_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=毒舌影视"
+  },
+  {
+    "key": "js_永乐视频_php",
+    "name": "js永乐视频_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=永乐视频"
+  },
+  {
+    "key": "js_独播库_php",
+    "name": "js独播库_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=独播库"
+  },
+  {
+    "key": "js_荐片_php",
+    "name": "荐片_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=荐片"
+  },
+  {
+    "key": "js_袋鼠影视_php",
+    "name": "袋鼠影视_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=袋鼠影视"
+  },
+  {
+    "key": "js_西饭短剧_php",
+    "name": "西饭短剧_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=西饭短剧"
+  },
+  {
+    "key": "js_达达兔影院_php",
+    "name": "达达兔影院_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=达达兔影院"
+  },
+  {
+    "key": "js_界影视_php",
+    "name": "界影视_php",
+    "type": 4,
+    "api": "http://zhangqun1818.serv00.net:6628/?spider=界影视"
+  },
+  {
+			"key": "php_官方资源",
+			"name": "🍎 官方资源(PHP)",
+			"type": 4,
+			"api": "https://php.doube.eu.org/spider/php/官方资源.php"
+		},
+		{
+			"key": "php_欧乐影院",
+			"name": "🍎 欧乐影院(PHP)",
+			"type": 4,
+			"api": "https://php.doube.eu.org/spider/php/欧乐影院.php"
+		},
+		{
+			"key": "php_电影天堂",
+			"name": "🍎 电影天堂(PHP)",
+			"type": 4,
+			"api": "https://php.doube.eu.org/spider/php/电影天堂.php"
+		},
+		{
+			"key": "php_非凡资源",
+			"name": "🍎 非凡资源(PHP)",
+			"type": 4,
+			"api": "https://php.doube.eu.org/spider/php/非凡资源.php"
+		}
+  ]
+}
