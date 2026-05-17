@@ -59,19 +59,22 @@
             "ext": "8c6d288565eb2ea7fcb9caa81e70fad5b9a3d290f7e7066e286ddee6884c810ce5bbe0a9ee3dca2a86a21892c506a73db6e9eadf0f102f57a713650b09b20c7ed86ac6d8055809567dcdf7992631b05b07840f7a3aebd4f2f23986e89834324945546dfd866eba25fe2b34032b831d187f3d1e1a0982dd144d2c9eb006927d6786e8000a6bdb05606ebfeaa766e30426f6e972c34572b0135764debe2e9bc50205ee689327796ad1a98359f5f747c7157e9f48f5972d3866c7cabf97ae8c43196eff79e4b88cab3a5d472ee39ff4acb22aedb9ae988535797e6546bc70796051b8396cccc737afaa5c8ccf391ad8fd94b2b12a92e605b945a5530d8add47d9c411d69f76843c30cf5b86c7586bb3249761d5df4ee367ba43a7e1bad64f62e27d4eccc7e008a02406ada1d25669514f10f583dfc01f08987a88005342a13f8002adf39acec7b6bc8bbb59adc7b70fb1e5c4baa8ceb73dd084a919db98cf7ce833504c93bea6fd2ed733b51a2c54903599f3799c76"
         },
         {
-            "name": "🍊橘汁|秒播",
-            "key": "Juzhi",
+            "name": "🧩橘汁|快速",
+            "key": "Woshinidie",
             "type": 3,
             "jar": "./Juzhi_spider.jar",
-            "api": "csp_Juzhi",
+            "api": "csp_Woshinidie",
             "searchable": 1,
-            "filterable": 1,
             "quickSearch": 1,
-            "changeable": 1,
+            "changeable": 0,
             "ext": {
                 "host": "",
-                "site": "https://vip.123pan.cn/1848463092/cct/az5.txt",
-                "version": "3.0.1.9"
+                "version": "3.0.2.1",
+                "abid": "8192",
+                "pkg": "com.lxf.snzlcgtzxyx",
+                "keys": "DGVQRUX5R1LWWDLHTGJSUKG1DJRVPQ==,OC1A06E197EF10CF3F6058CA7A803B5E",
+                "site": "https://123-1349250429.cos.ap-shanghai.myqcloud.com/app.txt",
+                "pub": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCr8SzZhjYy+rsya1K09t8d2K50pWFoBkgUqMpKOiW+3IEVKd4eTdvg9RSOjQ82kypL6R9BnsmrS1V8s4PVDwjQbUtYhTPPC9Hz16qY7rpD6m0d2vr09/UpWQ5uOy9PR0QTrsioveZ+DIe9jc3C+zBCu/kZSY/R8stwJoiitki3gwIDAQAB"
             }
         },
         {
