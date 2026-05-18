@@ -21,7 +21,7 @@
             "changeable": 0,
             "api": "csp_Douban",
             "searchable": 0
-        },          
+        },       
         {
             "key": "天天",
             "name": "🚀秒播┃1080P",
@@ -40,6 +40,27 @@
             "timeout": 12,
             "ext": "https://vip.wwgz.cn:5200"
         },      
+        {
+            "key": "小鹿视频ᵍᵉᵗ",
+            "name": "小鹿┃1080P",
+            "type": 3,
+            "api": "csp_AppGet",
+            "ext": "https://xiaolu-1319209748.cos.ap-beijing.myqcloud.com/xiaolu.txt|x5Bep6Q78VCeYnPS|V122|okhttp/3.10.0"
+        },
+        {
+            "key": "猫头鹰",
+            "name": "蓝鹰┃1080P",
+            "type": 3,
+            "api": "csp_AppGet",
+            "ext": "https://xinlanyinghb.oss-cn-wuhan-lr.aliyuncs.com/xly.txt|ca94b06ca359d80e|V122|okhttp/3.10.0"
+        },
+        {
+            "key": "奇迹",
+            "name": "奇迹┃1080P",
+            "type": 3,
+            "api": "csp_AppGet",
+            "ext": "https://qiqi-1311265976.cos.ap-nanjing.myqcloud.com/qijiapp0.txt|whosyoudaddy5477|V122|okhttp/3.10.0"
+        },
         {
             "key": "葫芦",
             "name": "🪽葫芦┃1080P",
@@ -85,10 +106,16 @@
             "api": "csp_App3Q"
         },
         {
+            "key": "Aigua",
+            "name": "🌳爱瓜┃1080P",
+            "type": 3,
+            "api": "https://gh-proxy.com/https://raw.githubusercontent.com/Tang-Ye-Dkny/Tang-Ye-DKNY/main/Tang/py/%E7%88%B1%E7%93%9C.py"
+        },
+        {
             "key": "独播库",
             "name": "🌳独播┃1080P",
             "type": 3,
-            "api": "https://asxav.tprssz.com/image/2026-04-09/8/2042044022836473856#dbokutv.js"
+            "api": "https://gh-proxy.com/https://raw.githubusercontent.com/Tang-Ye-Dkny/Tang-Ye-DKNY/main/Tang/js/%E7%8B%AC%E6%92%AD%E5%BA%93.js"
         },
         {
             "key": "csp_SaoHuo",
@@ -135,6 +162,25 @@
                 "package": "com.yuaiweiwu.aixue.zfdr",
                 "buildNumber": "2001",
                 "buildSignature": "03DD38CE4C3D62D0F0DEFACC06768D14EB382C7BD77A05B2EBF4D66E154A0D47"
+            }
+        },
+        {
+            "name": "🧩橘汁|快速",
+            "key": "Woshinidie",
+            "type": 3,
+            "jar": "./5.jar",
+            "api": "csp_Woshinidie",
+            "searchable": 1,
+            "quickSearch": 1,
+            "changeable": 0,
+            "ext": {
+                "host": "",
+                "version": "3.0.2.1",
+                "abid": "8192",
+                "pkg": "com.lxf.snzlcgtzxyx",
+                "keys": "DGVQRUX5R1LWWDLHTGJSUKG1DJRVPQ==,OC1A06E197EF10CF3F6058CA7A803B5E",
+                "site": "https://123-1349250429.cos.ap-shanghai.myqcloud.com/app.txt",
+                "pub": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCr8SzZhjYy+rsya1K09t8d2K50pWFoBkgUqMpKOiW+3IEVKd4eTdvg9RSOjQ82kypL6R9BnsmrS1V8s4PVDwjQbUtYhTPPC9Hz16qY7rpD6m0d2vr09/UpWQ5uOy9PR0QTrsioveZ+DIe9jc3C+zBCu/kZSY/R8stwJoiitki3gwIDAQAB"
             }
         },
         {
