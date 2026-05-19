@@ -18,7 +18,17 @@ class Spider(Spider):
             'Referer': self.host,
             'Connection': 'keep-alive'
         }
-        self.source_map = {"NBY":"高清NB源","1080zyk":"超清YZ源","ffm3u8":"极速FF源","lzm3u8":"稳定LZ源","yzzy":"YZ源"}
+        # 將頭條/西瓜資源識別碼（toutiao、xigua、xg）通通定義為 "BD源"
+        self.source_map = {
+            "toutiao": "BD源",
+            "xigua": "BD源",
+            "xg": "BD源",
+            "NBY": "高清NB源", 
+            "1080zyk": "超清YZ源", 
+            "ffm3u8": "极速FF源", 
+            "lzm3u8": "稳定LZ源", 
+            "yzzy": "YZ源"
+        }
         self.DEFAULT_PIC = "https://pic.rmb.bdstatic.com/bjh/1d0b02d0f57f0a4212da8865de018520.jpeg"
 
     def getName(self):
@@ -116,11 +126,22 @@ class Spider(Spider):
                    for e in play_doc('.anthology-list-box').eq(idx).find('a').items() if e.text() and e.attr('href')]
             if eps: sources[sname] = '#'.join(eps)
 
-        # 排序播放源
+        # 🌟 終極萬能排序邏輯
         final_from, final_url = [], []
-        if "高清NB源" in sources:
-            final_from.append("高清NB源")
-            final_url.append(sources.pop("高清NB源"))
+        
+        # 1. 遍歷目前抓到的所有播放源名字，只要名字裡面包含 "BD" 兩個字（不論是BD源24、BD播放地址還是BD高清）
+        bd_keys = [k for k in sources.keys() if "BD" in k]
+        for k in bd_keys:
+            final_from.append(k)
+            final_url.append(sources.pop(k)) # 抓出來塞進線路 1 並從名單移除
+            
+        # 2. 接著處理原本的高清NB源，順延變成線路 2
+        nb_keys = [k for k in sources.keys() if "NB" in k]
+        for k in nb_keys:
+            final_from.append(k)
+            final_url.append(sources.pop(k))
+            
+        # 3. 剩下的其他所有線路，依序排在後面
         final_from.extend(sources.keys())
         final_url.extend(sources.values())
         
