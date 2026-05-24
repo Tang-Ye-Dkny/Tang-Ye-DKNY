@@ -372,6 +372,27 @@ async function detail(id) {
 }
  
 async function play(flag, id, flags) {
+    // 提取出乾淨的原始 URL（去除 get 內置的 @@ 後綴，方便特徵比對）
+    let rawUrl = id.split('@@')[0];
+
+    // ========================================================
+    // 【萬能直鏈過濾器】
+    // 只要偵測到是標準的串流或影片直鏈，立刻放行，防止 get 後續邏輯將其解析壞
+    // ========================================================
+    if (rawUrl.match(/\.(m3u8|mp4|mkv|flv|mov)(\?|$)/i) || rawUrl.includes('m3u8') || rawUrl.includes('mp4')) {
+        return JSON.stringify({
+            parse: 0,
+            url: rawUrl,
+            header: { 'User-Agent': 'okhttp/4.9.2' } // 提供高相容性的播放 UA
+        });
+    }
+
+    // ========================================================
+    // 【終極常規兜底】
+    // 若不是直鏈，代表是需要加密解析的源，毫無保留地退回到 get.js 原本的常規播放核心
+    // ========================================================
+    
+    // >>> 以下是原 get.js 的代碼，完全保持不動 <<<
     let parts = id.split('@@');
     let playUrl = parts[0];
     let parse = parts[1] || '';
