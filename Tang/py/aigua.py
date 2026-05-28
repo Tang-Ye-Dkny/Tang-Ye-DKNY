@@ -502,7 +502,7 @@ class Spider(Spider):
             return {'list': [], 'parse': 0, 'jx': 0}
 
     def playerContent(self, flag, pid, vipFlags):
-        url = 'https://aigua1.com/video/play-url?videoId=230907&sourceId=0&citycode=HKG&chapterId=2916522'
+        url = 'https://aigua8.com/video/play-url?videoId=230907&sourceId=0&citycode=HKG&chapterId=2916522'
         a = pid.split('-')
         videoId = a[0]
         chapterId = a[1]
@@ -529,7 +529,7 @@ class Spider(Spider):
         return '正在Destroy'
 
     def get_data(self):
-        url = self.home_url + 'https://aigua1.com/video/refresh-cate?page_num=1&sorttype=desc&channel_id=0&tag=0&area=0&year=0&page_size=28&sort=new'
+        url = self.home_url + 'https://aigua8.com/video/refresh-cate?page_num=1&sorttype=desc&channel_id=0&tag=0&area=0&year=0&page_size=28&sort=new'
         pass
 
 if __name__ == '__main__':
