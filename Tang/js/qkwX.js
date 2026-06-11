@@ -1,11 +1,11 @@
 // 定义基础配置
 const BASE_RELEASE_PAGE = 'https://91qkw.cc'; // 发布页地址
 const BACKUP_DOMAINS = [
-    'https://www.qkw1.com',
-    'https://888.qkw1.cc',
-    'https://888.qkw2.cc',
-    'https://888.91qkw.cc'
-]; // 备用域名列表，防止发布页也挂了
+    'https://www.qkw1.com',     // 優先使用
+    'https://888.91qkw.cc',    // 穩定備用
+    'https://wap.91qkw.com',   // 處理跳轉的備用
+    'https://novip.qkwaa.com'
+];
 
 let HOST = ''; // 最终使用的域名
 let HEADERS = {};
@@ -81,113 +81,123 @@ async function homeVod() {
  */
 async function category(tid, pg, filter, extend) {
     let p = pg || 1;
-    // 构造 URL: /qkwshow/{cateId}-{area}--{class}-----{catePg}---{year}.html
-    // 这里的 tid 对应 type_id，例如 'tv'
-    let url = `${HOST}/qkwshow/${tid}-----${p}---.html`;
-
+    // 修正點：確保所有參數都帶上，即便為空也要補分隔符
+    // 格式參考: {cateId}-{area}--{class}-----{catePg}---{year}.html
+    let url = `${HOST}/qkwshow/${tid}--------${p}---.html`;
+    
+    console.log("🚀 正在請求分類頁: " + url);
+    
     let resp = await req(url, { headers: HEADERS });
     return JSON.stringify({
         "list": getList(resp.content),
         "page": parseInt(p),
-        "pagecount": 99 // 默认给大一点，xbpq通常不返回总页数
+        "pagecount": 99
     });
 }
 
 /**
- * 搜索功能
+ * 搜索功能 (優化版：使用 API 接口)
  */
 async function search(wd, quick, pg) {
     let p = pg || 1;
-    // xbpq 配置里的搜索通常是 get 请求 ?wd=xxx
-    let url = `${HOST}/qkwsearch/-------------.html?wd=${encodeURIComponent(wd)}`;
-
-    let resp = await req(url, { headers: HEADERS });
-    return JSON.stringify({ list: getList(resp.content) });
-}
-
-/**
- * 详情页解析（已修复标题提取逻辑）
- */
-async function detail(id) {
-    // id 可能是相对路径，也可能是完整的 http 链接
-    let url = id.startsWith('http') ? id : HOST + id;
+    let url = `${HOST}/index.php/ajax/suggest?mid=1&wd=${encodeURIComponent(wd)}&page=${p}`;
 
     try {
         let resp = await req(url, { headers: HEADERS });
-        let html = resp.content;
-
-        // 1. 【核心修复】多层级提取影片名称
-        let vod_name = "未知影片"; // 默认值
+        let res = JSON.parse(resp.content);
+        let list = [];
         
-        // 策略 A: 尝试提取页面上的常见标题元素
-        // 覆盖了不同模板的结构差异
-        let titleSelectors = [
-            'h1.title', 
-            '.stui-content__detail h1', 
-            '.stui-content__detail .title',
-            '.stui-player__detail h1'
-        ];
-        
-        for (let selector of titleSelectors) {
-            let name = pdfh(html, selector + '&&Text');
-            if (name && name !== "未知影片") {
-                vod_name = name.trim();
-                break;
-            }
+        if (res.list && res.list.length > 0) {
+            res.list.forEach(item => {
+                // 【核心修正】: 觀察 API 結構
+                // 有些站點的 API 返回的是 item.id，或者需要拼接出 vod_id
+                // 如果你的接口沒有 url 字段，請改用 item.id
+                let vod_id = item.url || ('/qkwtv/' + item.id + '.html'); 
+                
+                list.push({
+                    "vod_id": vod_id,
+                    "vod_name": item.name,
+                    "vod_pic": item.pic && !item.pic.startsWith('http') ? HOST + item.pic : item.pic,
+                    "vod_remarks": ""
+                });
+            });
         }
         
-        // 策略 B: 如果 DOM 元素没找到，尝试解析 <title> 标签
-        // 这是最稳定的后备方案
+        return JSON.stringify({
+            "list": list,
+            "page": parseInt(p),
+            "pagecount": 99
+        });
+    } catch (e) {
+        console.log("API 搜索失敗: " + e);
+        return JSON.stringify({ list: [] });
+    }
+}
+
+/**
+ * 詳情頁解析（強化路徑修復）
+ */
+async function detail(id) {
+    console.log("🔥 進入 detail 函數，傳入 ID 為: " + id); // 【最重要：確認這行有沒有出現在日誌裡】
+    
+    let url = id.startsWith('http') ? id : HOST + (id.startsWith('/') ? id : '/' + id);
+    // ... 後續代碼
+    
+    console.log("🔍 正在嘗試進入詳情頁: " + url);
+
+    try {
+        // 使用詳情頁自身作為 Referer，解決防盜鏈問題
+        let resp = await req(url, { 
+            headers: { 
+                ...HEADERS, 
+                "Referer": url,
+                "Host": url.split('/')[2] 
+            } 
+        });
+        let html = resp.content;
+
+        // 1. 提取影片名稱 (多策略)
+        let vod_name = "未知影片";
+        let titleSelectors = ['h1.title', '.stui-content__detail h1', '.stui-content__detail .title', '.stui-player__detail h1'];
+        for (let selector of titleSelectors) {
+            let name = pdfh(html, selector + '&&Text');
+            if (name && name !== "未知影片") { vod_name = name.trim(); break; }
+        }
         if (vod_name === "未知影片") {
             let page_title = pdfh(html, 'title&&Text');
             if (page_title) {
-                // 使用正则提取书名号《》内的内容
                 let match = page_title.match(/《(.*?)》/);
-                if (match && match[1]) {
-                    vod_name = match[1].trim();
-                } else {
-                    // 如果没有书名号，尝试截取 - 前面的内容
-                    vod_name = page_title.split('-')[0].split('_')[0].trim();
-                }
+                vod_name = match ? match[1].trim() : page_title.split('-')[0].split('_')[0].trim();
             }
         }
 
-        // 2. 提取其他基本信息 (保持不变)
-        let vod_pic = pdfh(html, '.stui-content__thumb img&&data-original');
+        // 2. 提取圖片與簡介
+        let vod_pic = pdfh(html, '.stui-content__thumb img&&data-original') || pdfh(html, '.stui-content__thumb img&&src');
         let vod_content = pdfh(html, '.detail-content&&Text') || "";
 
-        // 3. 提取播放线路名称 (vod_play_from)
+        // 3. 提取播放線路
         let playFromNodes = pdfa(html, '.stui-pannel__head h3');
-        let playFrom = playFromNodes.map(node => pdfh(node, 'body&&Text').trim()).join('$$$');
-        if (!playFrom) playFrom = "全网看播放源";
+        let playFrom = playFromNodes.length > 0 ? playFromNodes.map(node => pdfh(node, 'body&&Text').trim()).join('$$$') : "全網看播放源";
 
-        // 4. 提取播放链接 (vod_play_url)
+        // 4. 提取播放列表
         let playlistNodes = pdfa(html, 'ul.stui-content__playlist');
-        let playUrlList = [];
-        
-        playlistNodes.forEach(listNode => {
+        let playUrlList = playlistNodes.map(listNode => {
             let links = pdfa(listNode, 'li a');
-            let urls = links.map(a => {
+            return links.map(a => {
                 let epName = pdfh(a, 'body&&Text');
                 let epLink = pdfh(a, 'a&&href');
-                if (epLink && !epLink.startsWith('http')) {
-                    epLink = HOST + epLink;
-                }
-                return epName + '$' + epLink;
-            });
-            playUrlList.push(urls.join('#'));
+                return epName + '$' + (epLink.startsWith('http') ? epLink : HOST + epLink);
+            }).join('#');
         });
-
-        let playUrl = playUrlList.join('$$$');
 
         return JSON.stringify({
             list: [{
                 'vod_id': id,
-                'vod_name': vod_name, // 使用修复后的名称
-                'vod_pic': vod_pic,
+                'vod_name': vod_name,
+                'vod_pic': vod_pic && !vod_pic.startsWith('http') ? HOST + vod_pic : vod_pic,
                 'vod_content': vod_content,
                 'vod_play_from': playFrom,
-                'vod_play_url': playUrl
+                'vod_play_url': playUrlList.join('$$$')
             }]
         });
     } catch (e) {
@@ -237,21 +247,26 @@ async function play(flag, id, flags) {
 // 辅助函数：列表解析
 function getList(html) {
     let videos = [];
-    // 匹配 xbpq 配置的数组规则: stui-vodlist__thumb lazyload
-    let items = pdfa(html, 'a.stui-vodlist__thumb');
+    // 優先匹配 ul.stui-vodlist > li 結構 (分類頁最常見)
+    let items = pdfa(html, 'ul.stui-vodlist li'); 
+    
+    // 如果上面抓不到，嘗試匹配 div.stui-vodlist__item (某些主題)
+    if (items.length === 0) {
+        items = pdfa(html, 'div.stui-vodlist__item');
+    }
 
     items.forEach(it => {
+        // 從 li 內部提取鏈接和圖片
         let href = pdfh(it, 'a&&href');
         let title = pdfh(it, 'a&&title');
-        let pic = pdfh(it, 'a&&data-original');
+        let pic = pdfh(it, 'a&&data-original') || pdfh(it, 'img&&src'); 
 
-        // 过滤掉空数据
         if (href && title) {
             videos.push({
                 "vod_id": href,
                 "vod_name": title,
-                "vod_pic": pic.startsWith('/') ? HOST + pic : pic,
-                "vod_remarks": "" // 列表页通常没有备注，除非额外解析
+                "vod_pic": pic && !pic.startsWith('http') ? HOST + pic : pic,
+                "vod_remarks": pdfh(it, '.pic-text&&Text') || ""
             });
         }
     });
