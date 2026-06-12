@@ -1,160 +1,124 @@
-var host = 'https://www.qkw1.com';
-var headers = {
+// 定义基础配置
+const BASE_RELEASE_PAGE = 'https://91qkw.cc'; // 发布页地址
+const BACKUP_DOMAINS = [
+    'https://www.qkw1.com',     // 優先使用
+    'https://888.91qkw.cc',    // 穩定備用
+    'https://wap.91qkw.com',   // 處理跳轉的備用
+    'https://novip.qkwaa.com'
+];
+
+// 初始化默认兜底域名（解决Fongmi抢先调用导致HOST为空）
+let HOST = BACKUP_DOMAINS[0];
+let HEADERS = {
     "User-Agent": "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36",
-    "Referer": host + "/"
+    "Referer": HOST + "/"
 };
 
-// 初始化入口
-async function init(cfg) {}
-
 /**
- * 通用列表解析函数
- * 对应 xbpq 中的数组: stui-vodlist__thumb lazyload&&</a>
+ * 初始化函数：兼容Fongmi异步执行逻辑
  */
-function getList(html) {
-    let videos = [];
-    // 使用 pdfa 提取所有包含 class="stui-vodlist__thumb" 的 a 标签
-    let items = pdfa(html, 'a.stui-vodlist__thumb');
-
-    items.forEach(it => {
-        // 提取链接 (vod_id)
-        let href = pdfh(it, 'a&&href');
-        // 提取标题 (vod_name) - 优先取 title 属性，如果没有则取文本
-        let name = pdfh(it, 'a&&title') || pdfh(it, 'a&&Text');
-        // 提取图片 (vod_pic) - 懒加载通常使用 data-original
-        let pic = pdfh(it, 'img&&data-original');
-
-        if (href && name) {
-            // 补全相对路径
-            if (!href.startsWith('http')) {
-                href = host + href;
+async function init(cfg) {
+    try {
+        let releaseHtml = await req(BASE_RELEASE_PAGE);
+        if (releaseHtml && releaseHtml.content) {
+            let matches = releaseHtml.content.match(/https:\/\/[^\s"']+?(qkw|kkt)[^\s"']*/g);
+            if (matches && matches.length > 0) {
+                for (let url of matches) {
+                    url = url.replace(/[.,;!?]$/, "");
+                    if (!url.includes('87kkt') && !url.includes('91qkw')) {
+                        HOST = url;
+                        HEADERS.Referer = HOST + "/";
+                        console.log("✅ 成功从发布页获取域名: " + HOST);
+                        break;
+                    }
+                }
             }
-            if (pic && !pic.startsWith('http')) {
-                pic = host + pic;
-            }
-
-            videos.push({
-                "vod_id": href,
-                "vod_name": name.replace(/<.*?>/g, ""), // 去除可能的HTML标签
-                "vod_pic": pic || "",
-                "vod_remarks": "" // 列表页暂无备注信息，留空
-            });
         }
-    });
-    return videos;
+    } catch (e) {
+        console.log("⚠️ 发布页获取失败，使用备用域名");
+    }
 }
 
 /**
- * 首页分类数据
- * 对应 xbpq 中的分类: 短剧$duanju#电视剧$tv...
+ * 首页分类 - Fongmi严格要求固定结构
  */
 async function home(filter) {
     return JSON.stringify({
-        "class": [
-            {"type_id":"duanju","type_name":"短剧"},
+        class: [          
             {"type_id":"tv","type_name":"电视剧"},
             {"type_id":"dy","type_name":"电影"},
             {"type_id":"dm","type_name":"动漫"},
-            {"type_id":"zy","type_name":"综艺"}
-        ],
-        "filters": {}
+            {"type_id":"zy","type_name":"综艺"},
+            {"type_id":"duanju","type_name":"短剧"}
+        ]
     });
 }
 
 /**
- * 首页推荐视频
+ * 首页视频列表
  */
 async function homeVod() {
     try {
-        let resp = await req(host, { headers: headers });
-        return JSON.stringify({ list: getList(resp.content) });
+        let resp = await req(HOST, { headers: HEADERS });
+        return JSON.stringify({ list: getList(resp.content || "") });
     } catch (e) {
         return JSON.stringify({ list: [] });
     }
 }
 
 /**
- * 分类列表页
- * 对应 xbpq 分类url: .../{cateId}-{area}--{class}-----{catePg}---{year}.html
+ * 分类列表
  */
 async function category(tid, pg, filter, extend) {
-    let p = pg || 1;
-    // 构建符合目标网站格式的 URL
-    let url = `${host}/qkwshow/${tid}-----${p}---.html`;
+    let p = Number(pg) || 1;
+    let url = `${HOST}/qkwshow/${tid}--------${p}---.html`;
 
     try {
-        let resp = await req(url, { headers: headers });
-        return JSON.stringify({
-            "list": getList(resp.content),
-            "page": parseInt(p),
-            "pagecount": 99 // 默认给大一点，或者根据实际分页逻辑调整
-        });
-    } catch (e) {
-        return JSON.stringify({ list: [], page: p, pagecount: 0 });
-    }
-}
+        let resp = await req(url, { headers: HEADERS });
+        let html = resp.content || "";
+        let list = [];
 
-/**
- * 详情页解析（核心修复部分）
- * 解决多线路和播放源提取问题
- */
-async function detail(id) {
-    // id 可能是完整的 http 链接，也可能是相对路径
-    let url = id.startsWith('http') ? id : host + id;
+        // 直接用正则匹配视频列表项，避免Fongmi的pdfa解析问题
+        let items = html.match(/<li class="stui-vodlist__item[\s\S]*?<\/li>/g) || 
+                    html.match(/<div class="stui-vodlist__item[\s\S]*?<\/div>/g);
 
-    try {
-        let resp = await req(url, { headers: headers });
-        let html = resp.content;
+        if (items && items.length > 0) {
+            items.forEach(itHtml => {
+                let hrefMatch = itHtml.match(/href="([^"]+)"/);
+                let titleMatch = itHtml.match(/title="([^"]+)"/);
+                let picMatch = itHtml.match(/data-original="([^"]+)"/) || itHtml.match(/src="([^"]+\.(jpg|png))"/);
+                let remarksMatch = itHtml.match(/class="pic-text[^>]*>([^<]+)</);
 
-        // 1. 提取基本信息
-        let vod_name = pdfh(html, 'h1.title&&Text');
-        let vod_pic = pdfh(html, '.stui-content__thumb img&&data-original');
-        let vod_content = pdfh(html, '.detail-content&&Text'); // 简介
+                if (hrefMatch && titleMatch) {
+                    let href = hrefMatch[1];
+                    let title = titleMatch[1];
+                    let pic = picMatch ? picMatch[1] : "";
+                    let remarks = remarksMatch ? remarksMatch[1].trim() : "";
 
-        // 2. 提取播放线路名称 (vod_play_from)
-        // 假设线路标题在 .stui-pannel__head h3 中，如果结构不同需调整选择器
-        // 这里尝试通用的线路名提取，如果失败则默认为“全网看”
-        let playFromNodes = pdfa(html, '.stui-pannel__head h3');
-        let playFrom = playFromNodes.map(node => pdfh(node, 'body&&Text').trim()).join('$$$');
-        if (!playFrom) playFrom = "全网看播放源";
+                    // 统一转为相对路径
+                    if (href.startsWith(HOST)) href = href.replace(HOST, "");
+                    if (pic && !pic.startsWith("http")) pic = HOST + pic;
 
-        // 3. 提取播放链接 (vod_play_url)
-        // 关键逻辑：找到所有的播放列表容器 ul.stui-content__playlist
-        let playlistNodes = pdfa(html, 'ul.stui-content__playlist');
-
-        let playUrlList = [];
-        playlistNodes.forEach(listNode => {
-            // 获取该列表下的所有集数链接 a
-            let links = pdfa(listNode, 'li a');
-            let urls = links.map(a => {
-                let epName = pdfh(a, 'body&&Text'); // 集数名称，如“第1集”
-                let epLink = pdfh(a, 'a&&href');    // 播放页链接
-                // 补全链接
-                if (epLink && !epLink.startsWith('http')) {
-                    epLink = host + epLink;
+                    list.push({
+                        vod_id: href,
+                        vod_name: title,
+                        vod_pic: pic,
+                        vod_remarks: remarks
+                    });
                 }
-                return epName + '$' + epLink;
             });
-            // 用 # 连接同一线路下的集数
-            playUrlList.push(urls.join('#'));
-        });
-
-        // 用 $$$ 连接不同线路
-        let playUrl = playUrlList.join('$$$');
+        } else {
+            list = getList(html);
+        }
 
         return JSON.stringify({
-            list: [{
-                'vod_id': id,
-                'vod_name': vod_name,
-                'vod_pic': vod_pic,
-                'vod_content': vod_content,
-                'vod_play_from': playFrom,
-                'vod_play_url': playUrl
-            }]
+            list: list,
+            page: p,
+            pagecount: list.length > 0 ? 99 : 0,
+            limit: 20
         });
     } catch (e) {
-        console.log("Detail Error: " + e);
-        return JSON.stringify({ list: [] });
+        return JSON.stringify({ list: [], page: 1, pagecount: 0 });
     }
 }
 
@@ -162,62 +126,224 @@ async function detail(id) {
  * 搜索功能
  */
 async function search(wd, quick, pg) {
-    let p = pg || 1;
-    // 根据截图推断的搜索接口，通常是 wd=关键词
-    let url = `${host}/qkwsearch/-------------.html?wd=${encodeURIComponent(wd)}`;
+    let p = Number(pg) || 1;
+    let url = `${HOST}/index.php/ajax/suggest?mid=1&wd=${encodeURIComponent(wd)}&page=${p}`;
+    let list = [];
 
     try {
-        let resp = await req(url, { headers: headers });
-        return JSON.stringify({ list: getList(resp.content) });
+        let resp = await req(url, { headers: HEADERS });
+        let res = JSON.parse(resp.content || "{}");
+        if (res.list && Array.isArray(res.list)) {
+            res.list.forEach(item => {
+                let vod_id = "";
+                if (item.url) {
+                    vod_id = item.url.replace(HOST, "");
+                } else if (item.id) {
+                    vod_id = `/qkwtv/${item.id}.html`;
+                }
+
+                let vod_pic = item.pic || "";
+                if (vod_pic && !vod_pic.startsWith("http")) {
+                    vod_pic = HOST + vod_pic;
+                }
+
+                list.push({
+                    vod_id: vod_id,
+                    vod_name: item.name || "",
+                    vod_pic: vod_pic,
+                    vod_remarks: ""
+                });
+            });
+        }
+    } catch (e) {}
+
+    return JSON.stringify({
+        list: list,
+        page: p,
+        pagecount: list.length > 0 ? 99 : 0
+    });
+}
+
+/**
+ * 【重点修复】多线路解析 - 适配该网站的线路结构
+ */
+async function detail(id) {
+    // 1. 处理URL，确保是完整地址
+    let url = id.startsWith('http') ? id : HOST + (id.startsWith('/') ? id : '/' + id);
+
+    try {
+        let resp = await req(url, { headers: { ...HEADERS, Referer: url } });
+        let html = resp.content || "";
+        if (!html) return JSON.stringify({ list: [] });
+
+        // 2. 提取影片名称
+        let vod_name = "未知影片";
+        let titleMatch = html.match(/<h1 class="title[^>]*>([^<]+)<\/h1>/) || 
+                         html.match(/<title>(.*?)<\/title>/);
+        if (titleMatch) {
+            vod_name = titleMatch[1].trim();
+            if (vod_name.includes('《')) {
+                let nameMatch = vod_name.match(/《(.*?)》/);
+                if (nameMatch) vod_name = nameMatch[1];
+            } else {
+                vod_name = vod_name.split(/[_\-]/)[0].trim();
+            }
+        }
+
+        // 3. 提取图片地址
+        let vod_pic = "";
+        let picMatch = html.match(/class="stui-content__thumb[^>]*>[\s\S]*?src="([^"]+)"/) || 
+                       html.match(/class="stui-content__thumb[^>]*>[\s\S]*?data-original="([^"]+)"/);
+        if (picMatch) {
+            vod_pic = picMatch[1];
+            if (!vod_pic.startsWith("http")) vod_pic = HOST + vod_pic;
+        }
+
+        // 4. 提取简介
+        let vod_content = "";
+        let contentMatch = html.match(/class="detail-content[^>]*>([\s\S]*?)<\/div>/);
+        if (contentMatch) {
+            vod_content = contentMatch[1].replace(/<[^>]+>/g, '').trim();
+        }
+
+        // --------------------------
+        // 5. 【核心修复】多线路解析
+        // --------------------------
+        let playFrom = [];
+        let playUrlList = [];
+
+        // 匹配线路标题（适配该网站的结构，比如樱樱秒播、JP超清等）
+        // 先匹配所有线路标题的外层结构
+        let fromBlocks = html.match(/<div class="stui-pannel__head[^>]*>[\s\S]*?<\/div>/g);
+        if (fromBlocks && fromBlocks.length > 0) {
+            // 从每个线路块中提取标题
+            fromBlocks.forEach((block, index) => {
+                let fromName = block.replace(/<[^>]+>/g, '').trim();
+                if (fromName) {
+                    playFrom.push(fromName);
+                } else {
+                    playFrom.push(`线路${index+1}`);
+                }
+            });
+        }
+
+        // 匹配所有播放列表（和线路一一对应）
+        let listBlocks = html.match(/<ul class="stui-content__playlist[^>]*>[\s\S]*?<\/ul>/g);
+        if (listBlocks && listBlocks.length > 0) {
+            listBlocks.forEach(listHtml => {
+                let episodes = [];
+                let epMatches = listHtml.match(/<a[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g);
+                if (epMatches) {
+                    epMatches.forEach(ep => {
+                        let epMatch = ep.match(/href="([^"]+)"[^>]*>([^<]+)<\/a>/);
+                        if (epMatch) {
+                            let epUrl = epMatch[1];
+                            let epName = epMatch[2].trim();
+                            // 转相对路径
+                            if (epUrl.startsWith(HOST)) epUrl = epUrl.replace(HOST, "");
+                            episodes.push(`${epName}$${epUrl}`);
+                        }
+                    });
+                }
+                playUrlList.push(episodes.join('#'));
+            });
+        }
+
+        // 兜底处理：如果线路数和播放列表数不一致，强制对齐
+        if (playFrom.length !== playUrlList.length) {
+            if (playFrom.length === 0) playFrom = ["默认线路"];
+            if (playUrlList.length === 0) playUrlList = [""];
+            // 用较短的一方长度为准，补全另一方
+            let minLen = Math.min(playFrom.length, playUrlList.length);
+            playFrom = playFrom.slice(0, minLen);
+            playUrlList = playUrlList.slice(0, minLen);
+        }
+
+        return JSON.stringify({
+            list: [{
+                vod_id: id,
+                vod_name: vod_name,
+                vod_pic: vod_pic,
+                vod_content: vod_content,
+                vod_play_from: playFrom.join('$$$'),
+                vod_play_url: playUrlList.join('$$$')
+            }]
+        });
     } catch (e) {
+        console.log("❌ Detail Error: " + e);
         return JSON.stringify({ list: [] });
     }
 }
 
 /**
- * 播放解析（解决无法播放的关键）
- * 进入播放页 -> 嗅探真实 m3u8/mp4 地址 -> 返回给播放器
+ * 播放解析
  */
 async function play(flag, id, flags) {
+    let url = id.startsWith('http') ? id : HOST + (id.startsWith('/') ? id : '/' + id);
+
     try {
-        // 1. 请求播放页面
-        let resp = await req(id, { headers: headers });
-        let html = resp.content;
+        let resp = await req(url, { headers: HEADERS });
+        let html = resp.content || "";
 
-        // 2. 尝试直接匹配 m3u8 链接 (正则嗅探)
-        // 很多网站会在 script 标签里生成 var player_aaaa={"url":"...m3u8..."}
-        let m3u8Match = html.match(/"url":"(.*?\.m3u8[^"]*)"/);
-        if (m3u8Match) {
-            let realUrl = m3u8Match[1].replace(/\\/g, ""); // 去除转义符
-            return JSON.stringify({
-                parse: 0, // 0 表示直接播放，不需要再次解析
-                url: realUrl,
-                header: headers // 必须带上 Referer，否则会被防盗链拦截
-            });
+        // 提取 player_aaaa 真实播放地址
+        let jsonMatch = html.match(/player_aaaa\s*=\s*({[^}]+})/);
+        if (jsonMatch) {
+            try {
+                let playerObj = JSON.parse(jsonMatch[1]);
+                if (playerObj.url) {
+                    return JSON.stringify({
+                        parse: 0,
+                        url: playerObj.url,
+                        header: HEADERS
+                    });
+                }
+            } catch (e) {}
         }
 
-        // 3. 如果没匹配到，尝试匹配 iframe src 或其他常见视频标签
-        let iframeMatch = html.match(/src="(.*?player.*?\.php\?.*?)"/);
-        if (iframeMatch) {
-             // 如果有解析接口，可以在这里处理，或者直接返回原链接让播放器嗅探
-             // 这里简单返回原链接，利用播放器的嗅探能力
-             return JSON.stringify({
-                parse: 1, // 1 表示交给播放器去嗅探
-                url: id,
-                header: headers
-            });
-        }
-
-        // 4. 兜底方案：返回原链接，开启嗅探
+        // 嗅探法
         return JSON.stringify({
             parse: 1,
-            url: id,
-            header: headers
+            url: url,
+            header: HEADERS
         });
-
     } catch (e) {
-        return JSON.stringify({ parse: 0, url: '', msg: '播放解析出错' });
+        return JSON.stringify({ parse: 0, url: "" });
     }
 }
 
+/**
+ * 列表解析工具函数
+ */
+function getList(html) {
+    let videos = [];
+    if (!html) return videos;
+
+    let items = pdfa(html, 'ul.stui-vodlist li');
+    if (items.length === 0) {
+        items = pdfa(html, 'div.stui-vodlist__item');
+    }
+
+    items.forEach(it => {
+        let href = pdfh(it, 'a&&href') || "";
+        let title = pdfh(it, 'a&&title') || "";
+        if (!href || !title) return;
+
+        if (href.startsWith(HOST)) href = href.replace(HOST, "");
+
+        let pic = pdfh(it, 'a&&data-original') || pdfh(it, 'img&&src') || "";
+        if (pic && !pic.startsWith('http')) pic = HOST + pic;
+
+        let remarks = pdfh(it, '.pic-text&&Text') || "";
+
+        videos.push({
+            vod_id: href,
+            vod_name: title,
+            vod_pic: pic,
+            vod_remarks: remarks
+        });
+    });
+    return videos;
+}
+
+// Fongmi 标准导出格式
 export default { init, home, homeVod, category, detail, search, play };
