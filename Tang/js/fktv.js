@@ -4,165 +4,335 @@ const headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 };
 
-// --- 標準內建 Base64 轉換 ---
-
+// ========== 替换为系统原生标准 Base64（双平台100%兼容） ==========
 function base64Encode(text) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-    let b64 = '';
-    for (let i = 0; i < text.length; i += 3) {
-        let n = (text.charCodeAt(i) << 16) | (text.charCodeAt(i + 1) << 8) | text.charCodeAt(i + 2);
-        b64 += chars.charAt((n >> 18) & 63)
-            + chars.charAt((n >> 12) & 63)
-            + chars.charAt((n >> 6) & 63)
-            + chars.charAt(n & 63);
+    try {
+        return btoa(unescape(encodeURIComponent(text)));
+    } catch (e) {
+        return "";
     }
-    let mod = text.length % 3;
-    return (mod ? b64.slice(0, mod - 3) + "===".substring(mod) : b64);
 }
 
 function base64Decode(str) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-    str = str.replace(/=/g, '');
-    let bin = '';
-    for (let i = 0; i < str.length; i += 4) {
-        let c1 = chars.indexOf(str.charAt(i)), c2 = chars.indexOf(str.charAt(i + 1)),
-            c3 = chars.indexOf(str.charAt(i + 2)), c4 = chars.indexOf(str.charAt(i + 3));
-        let n = (c1 << 18) | (c2 << 12) | (c3 << 6) | c4;
-        bin += String.fromCharCode((n >> 16) & 255, (n >> 8) & 255, n & 255);
+    try {
+        return decodeURIComponent(escape(atob(str)));
+    } catch (e) {
+        return "";
     }
-    return bin.substring(0, bin.length - [0, 0, 2, 1][str.length % 4]);
 }
 
 function generateCookie() {
     const t = "ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz102345678";
     let n = "";
-    for (let i = 0; i < 32; i++) n += t.charAt(Math.floor(Math.random() * t.length));
+    for (let i = 0; i < 32; i++) {
+        n += t.charAt(Math.floor(Math.random() * t.length));
+    }
     return `_did=${n}`;
 }
 
 function getProxyUrl(imgUrl) {
     if (!imgUrl) return "";
-    return `proxy://do=fktv_img&url=${base64Encode(encodeURIComponent(imgUrl))}`;
+    const enc = base64Encode(encodeURIComponent(imgUrl));
+    return `proxy://do=fktv_img&url=${enc}`;
 }
 
-// --- T3 核心標準介面 (嚴格對齊原始 T4 數據結構) ---
-
+// ========== 标准接口（Fongmi 严格兼容版） ==========
 async function init(cfg) {}
 
 async function home() {
     return JSON.stringify({
         class: [
-            { type_id: '1', type_name: '电影' }, { type_id: '2', type_name: '电视剧' },
-            { type_id: '4', type_name: '动漫' }, { type_id: '3', type_name: '综艺' },
-            { type_id: '8', type_name: '短剧' }, { type_id: '6', type_name: '纪录片' }
+            { type_id: '1', type_name: '电影' },
+            { type_id: '2', type_name: '电视剧' },
+            { type_id: '4', type_name: '动漫' },
+            { type_id: '3', type_name: '综艺' },
+            { type_id: '8', type_name: '短剧' },
+            { type_id: '6', type_name: '纪录片' }
         ]
     });
 }
 
-async function homeVod() { 
-    return JSON.stringify({ list: [] }); 
+async function homeVod() {
+    return JSON.stringify({ list: [], page: 1, pagecount: 0 });
 }
 
+// ========== 【重点修复】分类列表（纯正则解析，绕开Fongmi解析器） ==========
 async function category(tid, pg, filter, extend) {
-    const page = pg || 1;
-    // 🎯 修正：嚴格對齊原版分類網址結構
+    const page = Number(pg) || 1;
     const url = `${host}/channel?page=${page}&cat_id=${tid}&order=new&page_size=32`;
-    const res = await req(url, { headers });
-    
-    // 🎯 修正：嚴格對齊原版 HTML 標籤抓取規則
-    const data = pdfa(res.content, '.video-wrap .list-wrap .item-wrap');
-    const d = data.map(it => ({
-        vod_name: pdfh(it, '.meta-wrap a&&Text'),
-        vod_pic: getProxyUrl(pdfh(it, '.normal-wrap .bg-cover&&data-src')),
-        vod_remarks: pdfh(it, '.meta-wrap .category&&Text'),
-        vod_id: pdfh(it, '.meta-wrap a&&href')
-    }));
-    
-    return JSON.stringify({ page: parseInt(page), list: d });
+    try {
+        const res = await req(url, { headers });
+        const html = res.content || '';
+        let list = [];
+
+        // 用纯正则匹配所有 item-wrap，彻底绕开 pdfa 解析器
+        const items = html.match(/<div class="item-wrap[\s\S]*?<\/div>\s*<\/div>/g);
+        if (items && items.length > 0) {
+            list = items.map(itHtml => {
+                // 提取名称
+                let nameMatch = itHtml.match(/<a[^>]*title="([^"]+)"/);
+                let name = nameMatch ? nameMatch[1] : "";
+                
+                // 提取图片地址
+                let picMatch = itHtml.match(/data-src="([^"]+)"/);
+                let pic = picMatch ? getProxyUrl(picMatch[1]) : "";
+
+                // 提取备注
+                let remarkMatch = itHtml.match(/<div class="category[^>]*>([^<]+)<\/div>/);
+                let remark = remarkMatch ? remarkMatch[1].trim() : "";
+
+                // 提取 vod_id
+                let idMatch = itHtml.match(/<a[^>]*href="([^"]+)"/);
+                let id = idMatch ? idMatch[1] : "";
+
+                // 【关键兜底】如果代理图片失效，用占位图，保证列表项能渲染出来
+                if (!pic) {
+                    pic = `https://via.placeholder.com/300x450/333/fff?text=${encodeURIComponent(name || "无图")}`;
+                }
+
+                return {
+                    vod_name: name,
+                    vod_pic: pic,
+                    vod_remarks: remark,
+                    vod_id: id
+                };
+            }).filter(item => item.vod_name && item.vod_id);
+        }
+
+        return JSON.stringify({
+            page: page,
+            pagecount: 99,
+            list: list
+        });
+    } catch (e) {
+        return JSON.stringify({ page: 1, pagecount: 0, list: [] });
+    }
 }
 
-async function detail(id) {
-    const res = await req(`${host}${id}`, { headers });
-    const html = res.content;
+function extractLinesAndEpisodes(html, vodId) {
+    // 提取线路名：匹配 data-line 属性对应的 div 内容
+    const lineRegex = /<div[^>]*data-line="([^"]+)"[^>]*>([^<]+)<\/div>/g;
+    let lines = [];
+    let match;
+    while ((match = lineRegex.exec(html)) !== null) {
+        lines.push({ id: match[1], name: match[2].trim() });
+    }
+    // 如果没有 data-line，尝试匹配 .play-source
+    if (lines.length === 0) {
+        const altLineRegex = /<div[^>]*class="[^"]*play-source[^"]*"[^>]*>([^<]+)<\/div>/g;
+        while ((match = altLineRegex.exec(html)) !== null) {
+            lines.push({ id: `line${lines.length+1}`, name: match[1].trim() });
+        }
+    }
 
-    // 🎯 修正：嚴格對齊原版詳情頁解析標籤
-    const vod = {
-        vod_id: id,
-        vod_name: pdfh(html, '.tab-body h1.title&&Text'),
-        vod_pic: getProxyUrl(pdfh(html, '.info-more .meta-wrap .thumb&&data-src')),
-        vod_content: pdfh(html, '.info-more .desc&&Text'),
-        vod_remarks: pdfh(html, '.info-more .meta-wrap .mb-2&&Text'),
-        type_name: pdfh(html, '.info-more .meta-wrap .tag-list a&&Text'),
-        vod_play_from: '',
-        vod_play_url: ''
+    // 提取所有集数：匹配 data-id 和集数名称
+    const epRegex = /<div[^>]*data-id="([^"]+)"[^>]*>[\s\S]*?<span[^>]*class="[^"]*number[^"]*"[^>]*>([^<]+)<\/span>/g;
+    let episodes = [];
+    while ((match = epRegex.exec(html)) !== null) {
+        episodes.push({ id: match[1], name: match[2].trim() });
+    }
+
+    // 如果集数没匹配到，尝试更宽松的匹配
+    if (episodes.length === 0) {
+        const altEpRegex = /<a[^>]*href="javascript:;"[^>]*data-id="([^"]+)"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/g;
+        while ((match = altEpRegex.exec(html)) !== null) {
+            episodes.push({ id: match[1], name: match[2].trim() });
+        }
+    }
+
+    // 构建线路和集数字符串
+    let playFroms = [];
+    let playUrls = [];
+    for (let line of lines) {
+        playFroms.push(line.name);
+        let epStr = episodes.map(ep => `${ep.name}$${line.id}-${vodId}-${ep.id}`).join('#');
+        playUrls.push(epStr);
+    }
+    // 如果没有任何线路，至少给一个默认
+    if (playFroms.length === 0 && episodes.length > 0) {
+        playFroms.push('默认线路');
+        let epStr = episodes.map(ep => `${ep.name}$${vodId}-${ep.id}`).join('#');
+        playUrls.push(epStr);
+    }
+
+    return {
+        vod_play_from: playFroms.join('$$$'),
+        vod_play_url: playUrls.join('$$$')
     };
-
-    let playFroms = [], playUrls = [];
-    const playList = pdfa(html, '.line-header .item-wrap');
-    const indexList = pdfa(html, '.line-list .anthology-list .inner-wrap .item-wrap');
-
-    playList.forEach((it) => {
-        const line = pdfh(it, 'div&&data-line');
-        playFroms.push(pdfh(it, 'div&&Text'));
-        const urls = indexList.map(idx => `${pdfh(idx, 'span.number&&Text')}$${line}-${id}-${pdfh(idx, 'div&&data-id')}`);
-        playUrls.push(urls.join('#'));
-    });
-
-    vod.vod_play_from = playFroms.join('$$$');
-    vod.vod_play_url = playUrls.join('$$$');
-
-    return JSON.stringify({ list: [vod] });
 }
 
-async function search(wd, quick, pg) {
-    const page = pg || 1;
-    // 🎯 修正：嚴格對齊原版搜尋網址結構
-    const url = `${host}/channel?page=${page}&keywords=${encodeURIComponent(wd)}&page_size=32&order=new`;
-    const res = await req(url, { headers });
-    
-    const data = pdfa(res.content, '.video-wrap .list-wrap .item-wrap');
-    const d = data.map(it => ({
-        vod_name: pdfh(it, '.meta-wrap a&&Text'),
-        vod_pic: getProxyUrl(pdfh(it, '.normal-wrap .bg-cover&&data-src')),
-        vod_remarks: pdfh(it, '.meta-wrap .category&&Text'),
-        vod_id: pdfh(it, '.meta-wrap a&&href')
-    }));
-    
-    return JSON.stringify({ list: d });
-}
-
-async function play(flag, id, flags) {
-    const [vod_from, vod_id, vod_url] = id.split("-");
-    const detailUrl = `${host}${vod_id}`;
-    
-    // 🎯 100% 完整保留原本最核心的 POST 播放請求
-    const res = await req(detailUrl, {
-        method: 'POST',
-        headers: { 
-            "Content-Type": 'application/x-www-form-urlencoded; charset=UTF-8', 
-            "Referer": detailUrl, 
-            "Cookie": generateCookie(),
-            "User-Agent": headers["User-Agent"]
-        },
-        body: `link_id=${vod_url}&is_switch=1`
-    });
+// ========== 【精准提取版】Detail 函数 ==========
+async function detail(id) {
+    const vodId = Array.isArray(id) ? id[0] : id;
+    if (!vodId) return JSON.stringify({ list: [] });
 
     try {
+        let url = vodId.startsWith('http') ? vodId : `${host}${vodId}`;
+        const res = await req(url, { headers: headers, timeout: 10000 });
+        const html = res.content || '';
+
+        // --- 1. 提取基础信息 ---
+        let vod_name = "未知影片";
+        const nameMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
+        if (nameMatch) vod_name = nameMatch[1].trim();
+
+        let vod_pic = "";
+        const picMatch = html.match(/data-src="([^"]+)"/) || html.match(/poster="([^"]+)"/);
+        if (picMatch) vod_pic = getProxyUrl(picMatch[1]);
+        else vod_pic = `https://via.placeholder.com/300x450/333/fff?text=${encodeURIComponent(vod_name)}`;
+
+        let vod_content = "";
+        const contentMatch = html.match(/class="desc"[^>]*>([\s\S]*?)<\/div>/);
+        if (contentMatch) vod_content = contentMatch[1].replace(/<[^>]+>/g, '').trim();
+
+        // --- 2. 调用核心解析函数（线路+集数）---
+        const { vod_play_from, vod_play_url } = extractLinesAndEpisodes(html, vodId);
+
+        // --- 3. 返回结果 ---
+        return JSON.stringify({
+            list: [{
+                vod_id: vodId,
+                vod_name: vod_name,
+                vod_pic: vod_pic,
+                vod_content: vod_content,
+                vod_play_from: vod_play_from,
+                vod_play_url: vod_play_url
+            }]
+        });
+
+    } catch (err) {
+        console.error("Detail Error:", err);
+        return JSON.stringify({ list: [] });
+    }
+}
+
+// ========== 【最终修复版】主动请求API获取m3u8地址 ==========
+async function play(flag, id, flags) {
+    // 重要：这里的 id 正是你在 detail 函数里构造的格式（例如 "line1-/movie/detail/xxx-6c5ad..."）
+    // 第一步：解析出我们需要的关键信息
+    let lineId, vodId, epId;
+    const parts = id.split('$');
+    // 你目前的 detail 函数构造的 id 可能没有 '$'，所以这里提供两种解析方式，确保兼容
+    let identifier = parts.length > 1 ? parts[1] : id;
+    const dashParts = identifier.split('-');
+    
+    if (dashParts.length >= 3) {
+        // 标准格式：lineId-vodId-epId
+        lineId = dashParts[0];
+        vodId = dashParts[1];
+        epId = dashParts[2];
+    } else if (dashParts.length === 2) {
+        // 备选格式：vodId-epId
+        lineId = 'default';
+        vodId = dashParts[0];
+        epId = dashParts[1];
+    } else {
+        // 降级处理
+        vodId = identifier;
+        epId = '1';
+        lineId = 'default';
+    }
+
+    // 第二步：请求播放详情页，获取真实的播放地址
+    const detailUrl = `${host}${vodId}`;
+    const body = `link_id=${epId}&is_switch=1`;
+
+    try {
+        // 用 POST 方法，带着正确的 Cookie 和 Referer 去请求
+        const res = await req(detailUrl, {
+            method: 'POST',
+            headers: {
+                "Content-Type": 'application/x-www-form-urlencoded; charset=UTF-8',
+                "Referer": detailUrl,
+                "Cookie": generateCookie(), // 别忘了你的Cookie生成函数
+                "User-Agent": headers["User-Agent"]
+            },
+            body: body
+        });
+        
         const response = JSON.parse(res.content);
-        const item = response.data.play_links.find(i => i.id === vod_from);
-        return JSON.stringify({ parse: 0, url: `${host}${item.m3u8_url}` });
+        let m3u8Url = null;
+        
+        // 第三步：从返回的 JSON 数据里提取 m3u8 地址
+        if (response.data && response.data.play_links) {
+            if (lineId !== 'default') {
+                const link = response.data.play_links.find(i => i.id == lineId);
+                if (link) m3u8Url = link.m3u8_url;
+            } else if (response.data.play_links.length > 0) {
+                m3u8Url = response.data.play_links[0].m3u8_url;
+            }
+        }
+        
+        // 第四步：成功拿到地址，直接返回给播放器
+        if (m3u8Url) {
+            const fullUrl = m3u8Url.startsWith('http') ? m3u8Url : `${host}${m3u8Url}`;
+            return JSON.stringify({ parse: 0, url: fullUrl });
+        } else {
+            // 如果没拿到，退一步让播放器自己去页面上嗅探
+            return JSON.stringify({ parse: 1, url: detailUrl });
+        }
     } catch (e) {
+        // 报错时也尝试用嗅探兜底
         return JSON.stringify({ parse: 1, url: detailUrl });
     }
 }
 
-// 👑 T3 標準本機代理功能（加入安全防撞防錯機制）
+
+// ========== 【重点修复】搜索函数（和分类一样改用纯正则） ==========
+async function search(wd, quick, pg) {
+    const page = Number(pg) || 1;
+    const url = `${host}/channel?page=${page}&keywords=${encodeURIComponent(wd)}&page_size=32&order=new`;
+    try {
+        const res = await req(url, { headers });
+        const html = res.content || '';
+        let list = [];
+
+        const items = html.match(/<div class="item-wrap[\s\S]*?<\/div>\s*<\/div>/g);
+        if (items && items.length > 0) {
+            list = items.map(itHtml => {
+                let nameMatch = itHtml.match(/<a[^>]*title="([^"]+)"/);
+                let name = nameMatch ? nameMatch[1] : "";
+                
+                let picMatch = itHtml.match(/data-src="([^"]+)"/);
+                let pic = picMatch ? getProxyUrl(picMatch[1]) : "";
+
+                let remarkMatch = itHtml.match(/<div class="category[^>]*>([^<]+)<\/div>/);
+                let remark = remarkMatch ? remarkMatch[1].trim() : "";
+
+                let idMatch = itHtml.match(/<a[^>]*href="([^"]+)"/);
+                let id = idMatch ? idMatch[1] : "";
+
+                if (!pic) {
+                    pic = `https://via.placeholder.com/300x450/333/fff?text=${encodeURIComponent(name || "无图")}`;
+                }
+
+                return {
+                    vod_name: name,
+                    vod_pic: pic,
+                    vod_remarks: remark,
+                    vod_id: id
+                };
+            }).filter(item => item.vod_name && item.vod_id);
+        }
+
+        return JSON.stringify({
+            page: page,
+            pagecount: 99,
+            list: list
+        });
+    } catch (e) {
+        return JSON.stringify({ page: 1, pagecount: 0, list: [] });
+    }
+}
+
 async function proxy(args) {
-    const doWhat = args.do;
+    const doWhat = args.do || "";
     if (doWhat === 'fktv_img') {
-        const targetUrl = decodeURIComponent(base64Decode(args.url));
-        // 如果盒子內建環境無法完美支持 AES 運算，直接進行重定向安全降級，保證顯示圖片不卡死
-        return ["redirect", targetUrl];
+        const encUrl = args.url || "";
+        const targetUrl = base64Decode(encUrl);
+        if (targetUrl) {
+            return ["redirect", targetUrl];
+        }
     }
     return [404, "text/plain", "Not Found"];
 }
