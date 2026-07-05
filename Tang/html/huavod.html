@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 <title>华视影院 WebHome</title>
 <style>
+  /* 样式与之前相同，省略重复 */
   :root{--panel-rgb:42,50,58;--panel:rgba(var(--panel-rgb),.62);--panel-soft:rgba(var(--panel-rgb),.44);--panel-strong:rgba(var(--panel-rgb),.86);--line:rgba(255,255,255,.16);--text:#f7fbff;--muted:rgba(247,251,255,.68);--accent:#6c5ce7;--accent2:#a29bfe;--bad:#ff5c7a;--ok:#68e39a;--radius:18px;--shadow:0 18px 50px rgba(0,0,0,.28)}
   *{box-sizing:border-box} html,body{margin:0;min-height:100%;background:transparent;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif} html:not(.fm-native),html:not(.fm-native) body{background:#222a32}.app{min-height:100vh;background:transparent;padding:10px 10px 28px}.top{position:relative;z-index:1;background:transparent;backdrop-filter:none;padding:8px 0 10px;border-bottom:0}.bar{display:flex;align-items:center;gap:8px}.brand{flex:0 0 auto;font-size:21px;font-weight:900;letter-spacing:.5px;text-shadow:0 2px 14px rgba(0,0,0,.35)}.brand b{color:var(--accent2)}.search{flex:1;display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 7px 6px 13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}.search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:15px}.search input::placeholder{color:var(--muted)}button,.btn{border:1px solid var(--line);background:var(--panel-soft);color:var(--text);border-radius:999px;padding:8px 12px;font-size:14px;cursor:pointer}.btn.primary,button.primary{border-color:rgba(255,107,53,.45);background:linear-gradient(135deg,rgba(255,107,53,.90),rgba(255,184,107,.72));color:#17110d;font-weight:800}.tabs{display:flex;gap:8px;overflow:auto;padding:10px 2px 0;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{white-space:nowrap;border-radius:999px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--muted)}.tab.active{background:linear-gradient(135deg,rgba(255,107,53,.55),rgba(255,184,107,.30));color:var(--text);border-color:rgba(255,184,107,.58);font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.card{position:relative;min-width:0;border-radius:15px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045));border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 28px rgba(0,0,0,.22);cursor:pointer}.poster{aspect-ratio:3/4;background:rgba(255,255,255,.08);overflow:hidden;position:relative}.poster img{width:100%;height:100%;object-fit:cover;display:block}.meta{padding:8px 8px 10px;background:linear-gradient(180deg,rgba(18,24,30,.15),rgba(18,24,30,.44))}.name{font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.remark{margin-top:4px;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.section{margin:16px 0}.section-title{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}.section-title h2{margin:0;font-size:17px;letter-spacing:.3px}.detail-panel{background:linear-gradient(135deg,rgba(40,30,64,.68),rgba(24,20,42,.54));border:1px solid rgba(255,255,255,.10);border-radius:22px;box-shadow:var(--shadow);padding:18px 14px 22px;margin-bottom:42px}.detail-head{display:grid;grid-template-columns:38% 1fr;gap:16px;align-items:start}.detail-pic{width:100%;aspect-ratio:3/4;border-radius:16px;object-fit:cover;background:rgba(255,255,255,.08)}.detail-title{font-size:22px;font-weight:600;margin:0 0 8px;line-height:1.25}.detail-info{font-size:14px;color:var(--muted);line-height:1.6}.desc{font-size:15px;color:var(--muted);line-height:1.75;margin:12px 0}.line-tabs{display:flex;gap:8px;overflow-x:auto;margin:8px 0}.line-tab{padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);cursor:pointer;white-space:nowrap}.line-tab.active{background:rgba(255,184,107,.3);border-color:var(--accent2)}.episodes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.ep{padding:8px 4px;text-align:center;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--line);cursor:pointer}.empty{padding:30px 18px;text-align:center;color:var(--muted)}.focusable:focus{outline:2px solid rgba(255,184,107,.76);outline-offset:2px}
   @media (min-width:720px){.grid{grid-template-columns:repeat(5,minmax(0,1fr))}.detail-head{grid-template-columns:160px 1fr}.detail-pic{width:160px}}
   @media (max-width:480px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-  /* 播放器全屏覆盖 */
   #playerOverlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;display:none;flex-direction:column;}
   #playerOverlay.active{display:flex;}
   #playerOverlay iframe{flex:1;border:0;width:100%;height:100%;}
@@ -63,7 +63,6 @@ const CATS = [
 let currentUrl = BASE + CATS[0][1];
 let currentPage = 1;
 let lastFocus = null;
-let isDetailOpen = false;
 
 // ============ DOM 引用 ============
 const $ = s => document.querySelector(s);
@@ -102,11 +101,38 @@ async function reqText(url){
 
 function doc(html){ return new DOMParser().parseFromString(html, 'text/html'); }
 
-// ============ 解析函数 ============
+// ============ 广告清理函数（外层） ============
+function removeOuterAds(){
+  try {
+    // 隐藏所有来自 static.okokserver.com/img/ 的图片
+    document.querySelectorAll('img[src*="static.okokserver.com/img/"]').forEach(function(img){
+      var container = img.closest('a, div[class*="ad"], div[class*="banner"], .love-item, .player-right .switch-box, .check, .plist-body, #player-vip, .ucl-final-banner, .love-row-wrap');
+      if(container) container.style.display = 'none';
+      else img.style.display = 'none';
+    });
+    // 隐藏已知广告容器
+    document.querySelectorAll('.love-row-wrap, .love-item, #player-vip, .ucl-final-banner, .player-news, .switch-box .item img[src*="okokserver"]').forEach(function(el){
+      if(el) el.style.display = 'none';
+    });
+    // 隐藏 GIF 广告
+    document.querySelectorAll('img[src$=".gif"]').forEach(function(img){
+      var container = img.closest('a, div');
+      if(container) container.style.display = 'none';
+    });
+  } catch(e){}
+}
+
+// 动态监听广告（外层）
+function watchOuterAds(){
+  removeOuterAds();
+  var mo = new MutationObserver(function(){ removeOuterAds(); });
+  mo.observe(document.body, { childList: true, subtree: true });
+}
+
+// ============ 解析函数（与之前相同） ============
 function parseVodList(html){
   const d = doc(html);
   const items = [];
-  // 华视的影片卡片容器：.public-list-box 或 .vod-list-item
   d.querySelectorAll('.public-list-box, .vod-list-item, .module-item').forEach(box => {
     const a = box.querySelector('a[href*="/voddetail/"]');
     if(!a) return;
@@ -125,13 +151,10 @@ function parseDetail(html){
   const title = d.querySelector('h1.vod-title-seo, h1')?.textContent?.replace(/ - .*$/, '').trim() || '未知影片';
   const pic = d.querySelector('img[data-src]')?.getAttribute('data-src') || d.querySelector('.detail-pic img')?.src || '';
   const desc = d.querySelector('.vod_content, .content_desc, .detail-content')?.textContent?.trim() || '暂无简介';
-
-  // 获取线路和剧集
   const lineTabs = d.querySelectorAll('.anthology-tab a');
   const lineNames = [];
   lineTabs.forEach(a => { const name = a.textContent.trim(); if(name) lineNames.push(name); });
   if(lineNames.length === 0) lineNames.push('默认线路');
-
   const listBoxes = d.querySelectorAll('.anthology-list-box, .episode-list, .play-list');
   const lines = [];
   listBoxes.forEach((box, idx) => {
@@ -143,8 +166,6 @@ function parseDetail(html){
     });
     if(eps.length) lines.push({ name: lineNames[idx] || ('线路'+(idx+1)), eps });
   });
-
-  // 后备：直接找所有 /vodplay/ 链接
   if(lines.length === 0){
     const eps = [];
     d.querySelectorAll('a[href*="/vodplay/"]').forEach(a => {
@@ -154,7 +175,6 @@ function parseDetail(html){
     });
     if(eps.length) lines.push({ name: '默认线路', eps });
   }
-
   return { title, pic:abs(pic), desc, lines };
 }
 
@@ -192,7 +212,6 @@ async function loadCategory(url, page){
   renderTabs(currentUrl);
   content.innerHTML = '<div class="empty">加载中…</div>';
   try {
-    // 华视分类页格式：/vodshow/1--------1---.html，页码在最后
     let pageUrl = currentUrl.replace(/---\.html$/, `---${page}.html`);
     if(!pageUrl.includes(`---${page}.html`)) pageUrl = currentUrl + (currentUrl.includes('?')?'&':'?') + 'page='+page;
     const html = await reqText(pageUrl);
@@ -219,7 +238,6 @@ async function search(q){
 // ============ 详情 ============
 async function openDetail(url){
   lastFocus = document.activeElement;
-  isDetailOpen = true;
   detailSheet.style.display = 'block';
   detailPanel.innerHTML = '<div class="empty">加载详情…</div>';
   try {
@@ -262,22 +280,23 @@ async function openDetail(url){
 
     document.getElementById('closeDetail').onclick = ()=>{
       detailSheet.style.display = 'none';
-      isDetailOpen = false;
       if(lastFocus) lastFocus.focus();
     };
 
   } catch(e){ detailPanel.innerHTML = '<div class="empty">详情加载失败</div>'; }
 }
 
-// ============ 播放核心（含注入脚本） ============
+// ============ 播放核心（修复版：使用 parent.fm） ============
 function playEpisode(url, title){
   // 关闭详情浮层
   detailSheet.style.display = 'none';
-  isDetailOpen = false;
 
   // 显示全屏播放器
   playerOverlay.classList.add('active');
   playerIframe.src = abs(url);
+
+  // 清除外层广告
+  removeOuterAds();
 
   // 等待 iframe 加载完成后注入拦截脚本
   playerIframe.addEventListener('load', function onLoad(){
@@ -285,21 +304,24 @@ function playEpisode(url, title){
     try {
       const doc = playerIframe.contentDocument || playerIframe.contentWindow.document;
       if(!doc) return;
-      // 注入拦截脚本（完整版 huavod-inject.js 逻辑）
+      // 注入拦截脚本（使用 window.parent.fm）
       const script = doc.createElement('script');
       script.textContent = `
         (function(){
-          // ---- 等待 fm SDK ----
-          function whenFm(){
-            if(window.fm) return Promise.resolve(window.fm);
+          // ---- 等待父窗口的 fm SDK ----
+          function whenParentFm(){
+            if(window.parent && window.parent.fm) return Promise.resolve(window.parent.fm);
             return new Promise(function(resolve){
-              window.addEventListener('fmsdk', function(){ resolve(window.fm); }, {once:true});
-              setTimeout(function(){ resolve(window.fm); }, 3000);
+              var check = function(){
+                if(window.parent && window.parent.fm){ resolve(window.parent.fm); return; }
+                setTimeout(check, 200);
+              };
+              check();
             });
           }
 
-          whenFm().then(function(fm){
-            if(!fm){ console.warn('[华视播放] fm SDK 未就绪'); return; }
+          whenParentFm().then(function(fm){
+            if(!fm){ console.warn('[华视播放] parent.fm 未就绪'); return; }
 
             var lastUrl = '';
 
@@ -315,15 +337,13 @@ function playEpisode(url, title){
               }
             }
 
-            // ---- 策略一：广告跳过（16倍速静音快进） ----
+            // ---- 策略一：广告跳过 ----
             function autoSkipAd(){
               try {
                 var video = document.querySelector('video');
                 if(!video) return;
                 var src = video.currentSrc || video.src || '';
                 if(!src) return;
-
-                // 如果是广告 MP4 或包含广告关键词
                 if(src.includes('.mp4') || src.includes('preroll') || src.includes('taobao') || src.includes('/ad/') || src.includes('buyme')){
                   video.muted = true;
                   video.playbackRate = 16;
@@ -332,7 +352,6 @@ function playEpisode(url, title){
                   }
                 } else {
                   video.playbackRate = 1;
-                  // 如果是正片 m3u8，触发播放
                   if(src.includes('.m3u8') && !src.includes('baidu') && !src.includes('google')){
                     triggerNativePlay(src);
                   }
@@ -341,7 +360,7 @@ function playEpisode(url, title){
             }
             setInterval(autoSkipAd, 400);
 
-            // ---- 策略二：网络层拦截 (Fetch/XHR) ----
+            // ---- 策略二：网络拦截 ----
             function isTrueMedia(url){
               if(typeof url !== 'string') return false;
               return url.includes('.m3u8') && !url.includes('taobao') && !url.includes('preroll');
@@ -363,29 +382,25 @@ function playEpisode(url, title){
               return origOpen.apply(this, arguments);
             };
 
-            // ---- 策略三：广告清理（隐藏广告图片和容器） ----
-            function removeAds(){
+            // ---- 策略三：iframe 内部广告清理 ----
+            function removeInnerAds(){
               try {
-                // 隐藏广告图片
                 document.querySelectorAll('img[src*="static.okokserver.com/img/"]').forEach(function(img){
-                  var container = img.closest('a, div[class*="ad"], div[class*="banner"], .love-item, .player-right .switch-box, .check, .plist-body, #player-vip');
+                  var container = img.closest('a, div[class*="ad"], div[class*="banner"], .love-item, .player-right .switch-box, .check, .plist-body, #player-vip, .ucl-final-banner');
                   if(container) container.style.display = 'none';
                   else img.style.display = 'none';
                 });
-                // 隐藏广告容器
                 document.querySelectorAll('#player-vip, .ucl-final-banner, .love-item, .love-row-wrap, .player-news').forEach(function(el){
                   if(el) el.style.display = 'none';
                 });
-                // 隐藏 GIF 广告
                 document.querySelectorAll('img[src$=".gif"]').forEach(function(img){
                   var container = img.closest('a, div');
                   if(container) container.style.display = 'none';
                 });
               } catch(e){}
             }
-            removeAds();
-            // 动态监听新广告
-            var mo = new MutationObserver(function(){ removeAds(); });
+            removeInnerAds();
+            var mo = new MutationObserver(function(){ removeInnerAds(); });
             mo.observe(document.body, { childList: true, subtree: true });
 
             console.log('[华视播放] 注入脚本已运行（去广告 + m3u8 拦截）');
@@ -410,6 +425,8 @@ function playEpisode(url, title){
 function init(){
   renderTabs(CATS[0][1]);
   $('#searchForm').onsubmit = function(e){ e.preventDefault(); search($('#kw').value); };
+  // 启动外层广告清理
+  watchOuterAds();
   loadCategory(CATS[0][1], 1);
 }
 
