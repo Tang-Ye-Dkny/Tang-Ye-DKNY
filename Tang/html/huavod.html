@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>华视影院 WebHome</title>
+<style>
+  /* 此处省略样式，基本与歪比.html 类似，但配色可调整为华视风格，或直接沿用歪比的深色主题 */
+  :root{--panel-rgb:42,50,58;--panel:rgba(var(--panel-rgb),.62);--panel-soft:rgba(var(--panel-rgb),.44);--panel-strong:rgba(var(--panel-rgb),.86);--line:rgba(255,255,255,.16);--text:#f7fbff;--muted:rgba(247,251,255,.68);--accent:#6c5ce7;--accent2:#a29bfe;--bad:#ff5c7a;--ok:#68e39a;--radius:18px;--shadow:0 18px 50px rgba(0,0,0,.28)}
+  *{box-sizing:border-box} html,body{margin:0;min-height:100%;background:transparent;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif} html:not(.fm-native),html:not(.fm-native) body{background:#222a32}.app{min-height:100vh;background:transparent;padding:10px 10px 28px}.top{position:relative;z-index:1;background:transparent;backdrop-filter:none;padding:8px 0 10px;border-bottom:0}.bar{display:flex;align-items:center;gap:8px}.brand{flex:0 0 auto;font-size:21px;font-weight:900;letter-spacing:.5px;text-shadow:0 2px 14px rgba(0,0,0,.35)}.brand b{color:var(--accent2)}.search{flex:1;display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 7px 6px 13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}.search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:15px}.search input::placeholder{color:var(--muted)}button,.btn{border:1px solid var(--line);background:var(--panel-soft);color:var(--text);border-radius:999px;padding:8px 12px;font-size:14px;cursor:pointer}.btn.primary,button.primary{border-color:rgba(255,107,53,.45);background:linear-gradient(135deg,rgba(255,107,53,.90),rgba(255,184,107,.72));color:#17110d;font-weight:800}.tabs{display:flex;gap:8px;overflow:auto;padding:10px 2px 0;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{white-space:nowrap;border-radius:999px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--muted)}.tab.active{background:linear-gradient(135deg,rgba(255,107,53,.55),rgba(255,184,107,.30));color:var(--text);border-color:rgba(255,184,107,.58);font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.card{position:relative;min-width:0;border-radius:15px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045));border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 28px rgba(0,0,0,.22);cursor:pointer}.poster{aspect-ratio:3/4;background:rgba(255,255,255,.08);overflow:hidden;position:relative}.poster img{width:100%;height:100%;object-fit:cover;display:block}.meta{padding:8px 8px 10px;background:linear-gradient(180deg,rgba(18,24,30,.15),rgba(18,24,30,.44))}.name{font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.remark{margin-top:4px;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.section{margin:16px 0}.section-title{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}.section-title h2{margin:0;font-size:17px;letter-spacing:.3px}.detail-panel{background:linear-gradient(135deg,rgba(40,30,64,.68),rgba(24,20,42,.54));border:1px solid rgba(255,255,255,.10);border-radius:22px;box-shadow:var(--shadow);padding:18px 14px 22px;margin-bottom:42px}.detail-head{display:grid;grid-template-columns:38% 1fr;gap:16px;align-items:start}.detail-pic{width:100%;aspect-ratio:3/4;border-radius:16px;object-fit:cover;background:rgba(255,255,255,.08)}.detail-title{font-size:22px;font-weight:600;margin:0 0 8px;line-height:1.25}.detail-info{font-size:14px;color:var(--muted);line-height:1.6}.desc{font-size:15px;color:var(--muted);line-height:1.75;margin:12px 0}.line-tabs{display:flex;gap:8px;overflow-x:auto;margin:8px 0}.line-tab{padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);cursor:pointer;white-space:nowrap}.line-tab.active{background:rgba(255,184,107,.3);border-color:var(--accent2)}.episodes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.ep{padding:8px 4px;text-align:center;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--line);cursor:pointer}.empty{padding:30px 18px;text-align:center;color:var(--muted)}.focusable:focus{outline:2px solid rgba(255,184,107,.76);outline-offset:2px}
+  @media (min-width:720px){.grid{grid-template-columns:repeat(5,minmax(0,1fr))}.detail-head{grid-template-columns:160px 1fr}.detail-pic{width:160px}}
+  @media (max-width:480px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="top">
+    <div class="bar">
+      <div class="brand">华视<b>影院</b></div>
+      <form class="search" id="searchForm">
+        <input id="kw" type="text" placeholder="搜索影片..." autocomplete="off" />
+        <button class="primary" type="submit">搜索</button>
+      </form>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+  <div class="status" id="status">加载中…</div>
+  <main id="content"></main>
+</div>
+<div class="sheet" id="detailSheet" style="position:fixed;inset:0;z-index:40;display:none;background:rgba(0,0,0,.8);overflow-y:auto;padding:20px;">
+  <div class="detail-panel" id="detailPanel"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const BASE = 'https://huavod.com';
+const UA = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36';
+const CATS = [
+  ['电影', '/vodshow/1--------1---.html'],
+  ['电视剧', '/vodshow/2--------1---.html'],
+  ['综艺', '/vodshow/3--------1---.html'],
+  ['动漫', '/vodshow/4--------1---.html'],
+  ['短剧', '/vodshow/5--------1---.html'],
+  ['纪录片', '/vodshow/42--------1---.html']
+];
+
+let currentUrl = BASE + CATS[0][1];
+let currentTid = '1';
+let currentPage = 1;
+let lastFocus = null;
+
+const $ = s => document.querySelector(s);
+const content = $('#content');
+const status = $('#status');
+const tabs = $('#tabs');
+const detailSheet = $('#detailSheet');
+const detailPanel = $('#detailPanel');
+
+// ----- 工具函数 -----
+function abs(u){ try{ return new URL(u, BASE).href } catch(e){ return u || '' } }
+function esc(s){ return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])) }
+function clean(s){ return String(s||'').replace(/\s+/g,' ').trim() }
+function imgUrl(u){ u=abs(u||''); if(!u) return ''; try{ return window.fm && fm.res ? fm.res(u, {headers:{Referer:BASE+'/', 'User-Agent':UA}}) : u } catch(e){ return u } }
+
+function waitFm(){ if(window.fm) return Promise.resolve(window.fm); return new Promise(r=>{ window.addEventListener('fmsdk', ()=>r(window.fm), {once:true}); setTimeout(()=>r(window.fm), 2000); }); }
+
+async function reqText(url){
+  url = abs(url);
+  status.textContent = '加载：' + url;
+  const headers = {'User-Agent':UA, 'Referer':BASE+'/', 'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'};
+  try {
+    if(window.fm && fm.req){
+      let r = await fm.req(url, {method:'GET', headers, responseType:'text', timeout:20, credentials:'include'});
+      if(!r.ok) throw new Error(r.error || ('HTTP '+r.status));
+      return r.body || '';
+    }
+    let r = await fetch(url, {headers, cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return await r.text();
+  } catch(e){ status.textContent = '加载失败：'+e.message; throw e; }
+}
+
+function doc(html){ return new DOMParser().parseFromString(html, 'text/html'); }
+
+// ----- 解析首页/分类列表 -----
+function parseVodList(html){
+  const d = doc(html);
+  const items = [];
+  d.querySelectorAll('.public-list-box, .vod-list-item, .module-item').forEach(box => {
+    const a = box.querySelector('a[href*="/voddetail/"]');
+    if(!a) return;
+    const href = abs(a.getAttribute('href'));
+    const img = box.querySelector('img');
+    const image = img ? (img.getAttribute('data-src') || img.getAttribute('src') || '') : '';
+    const title = a.getAttribute('title') || a.textContent.trim() || '';
+    const remark = box.querySelector('.public-list-prb, .remarks')?.textContent || '';
+    if(title && href) items.push({ title:clean(title), remark:clean(remark), href, image:abs(image) });
+  });
+  return items;
+}
+
+// ----- 解析详情 -----
+function parseDetail(html){
+  const d = doc(html);
+  const title = d.querySelector('h1.vod-title-seo')?.textContent?.replace(/ - .*$/, '').trim() || '未知影片';
+  const pic = d.querySelector('img[data-src]')?.getAttribute('data-src') || d.querySelector('.detail-pic img')?.src || '';
+  const desc = d.querySelector('.vod_content, .content_desc')?.textContent?.trim() || '暂无简介';
+
+  // 获取线路和剧集
+  const lineTabs = d.querySelectorAll('.anthology-tab a');
+  const lineNames = [];
+  lineTabs.forEach(a => { const name = a.textContent.trim(); if(name) lineNames.push(name); });
+  if(lineNames.length === 0) lineNames.push('默认线路');
+
+  const listBoxes = d.querySelectorAll('.anthology-list-box, .episode-list');
+  const lines = [];
+  listBoxes.forEach((box, idx) => {
+    const eps = [];
+    box.querySelectorAll('a').forEach(a => {
+      const href = abs(a.getAttribute('href') || '');
+      const name = a.textContent.trim();
+      if(href && name) eps.push({ name, href });
+    });
+    if(eps.length) lines.push({ name: lineNames[idx] || ('线路'+(idx+1)), eps });
+  });
+
+  // 如果没解析到，使用后备
+  if(lines.length === 0){
+    const eps = [];
+    d.querySelectorAll('a[href*="/vodplay/"]').forEach(a => {
+      const href = abs(a.href);
+      const name = a.textContent.trim();
+      if(href && name) eps.push({ name, href });
+    });
+    if(eps.length) lines.push({ name: '默认线路', eps });
+  }
+
+  return { title, pic:abs(pic), desc, lines };
+}
+
+// ----- 渲染 -----
+function renderTabs(activeUrl){
+  tabs.innerHTML = CATS.map(([n,path]) => `<button class="tab ${abs(path)===abs(activeUrl)?'active':''}" data-url="${abs(path)}">${esc(n)}</button>`).join('');
+  tabs.querySelectorAll('.tab').forEach(b => b.onclick = ()=>loadCategory(b.dataset.url, 1));
+}
+
+function renderSections(items, title='影片列表'){
+  content.innerHTML = `
+    <section class="section">
+      <div class="section-title"><h2>${esc(title)}</h2></div>
+      <div class="grid">
+        ${items.map(it => `
+          <article class="card focusable" data-href="${esc(it.href)}">
+            <div class="poster">${it.image ? `<img loading="lazy" referrerpolicy="no-referrer" src="${esc(imgUrl(it.image))}" alt="${esc(it.title)}">` : '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted)">华</div>'}</div>
+            <div class="meta"><div class="name">${esc(it.title)}</div><div class="remark">${esc(it.remark)}</div></div>
+          </article>
+        `).join('')}
+      </div>
+    </section>
+  `;
+  content.querySelectorAll('.card').forEach(c => c.onclick = ()=>openDetail(c.dataset.href));
+}
+
+// ----- 加载分类 -----
+async function loadCategory(url, page){
+  currentUrl = abs(url);
+  renderTabs(currentUrl);
+  content.innerHTML = '<div class="empty">加载中…</div>';
+  try {
+    // 华视分类页格式：/vodshow/1--------1---.html 其中最后的数字是页码
+    let pageUrl = currentUrl.replace(/---\.html$/, `---${page}.html`);
+    if(!pageUrl.includes(`---${page}.html`)) pageUrl = currentUrl + (currentUrl.includes('?')?'&':'?') + 'page='+page;
+    const html = await reqText(pageUrl);
+    const items = parseVodList(html);
+    if(items.length === 0) { content.innerHTML = '<div class="empty">暂无内容</div>'; return; }
+    renderSections(items, '分类列表');
+    status.textContent = `第 ${page} 页，共 ${items.length} 条`;
+  } catch(e){ content.innerHTML = '<div class="empty">加载失败</div>'; }
+}
+
+// ----- 搜索 -----
+async function search(q){
+  q = clean(q); if(!q) return;
+  content.innerHTML = '<div class="empty">搜索中…</div>';
+  try {
+    const url = `${BASE}/vodsearch.html?wd=${encodeURIComponent(q)}&page=1`;
+    const html = await reqText(url);
+    const items = parseVodList(html);
+    if(!items.length) { content.innerHTML = '<div class="empty">未找到相关结果</div>'; return; }
+    renderSections(items, '搜索结果：'+q);
+  } catch(e){ content.innerHTML = '<div class="empty">搜索失败</div>'; }
+}
+
+// ----- 详情 -----
+async function openDetail(url){
+  lastFocus = document.activeElement;
+  detailSheet.style.display = 'block';
+  detailPanel.innerHTML = '<div class="empty">加载详情…</div>';
+  try {
+    const html = await reqText(url);
+    const detail = parseDetail(html);
+    let firstLine = detail.lines[0] || { name:'默认线路', eps:[] };
+
+    detailPanel.innerHTML = `
+      <button id="closeDetail" class="btn" style="margin-bottom:12px;">返回</button>
+      <div class="detail-head">
+        <img class="detail-pic" referrerpolicy="no-referrer" src="${esc(imgUrl(detail.pic))}" onerror="this.style.display='none'">
+        <div>
+          <div class="detail-title">${esc(detail.title)}</div>
+          <div class="detail-info">${esc(detail.desc)}</div>
+        </div>
+      </div>
+      <div class="desc">${esc(detail.desc)}</div>
+      <div class="play-title">播放线路</div>
+      <div class="line-tabs" id="lineTabs">
+        ${detail.lines.map((ln,i) => `<button class="line-tab ${i===0?'active':''}" data-line="${i}">${esc(ln.name)} (${ln.eps.length})</button>`).join('')}
+      </div>
+      <div class="episodes" id="epGrid"></div>
+    `;
+
+    function renderLine(idx){
+      const line = detail.lines[idx] || firstLine;
+      const grid = document.getElementById('epGrid');
+      if(!grid) return;
+      grid.innerHTML = line.eps.map(ep => `<button class="ep focusable" data-href="${esc(ep.href)}">${esc(ep.name)}</button>`).join('');
+      grid.querySelectorAll('.ep').forEach(b => b.onclick = ()=>playEpisode(b.dataset.href, detail.title + ' ' + b.textContent));
+    }
+    renderLine(0);
+
+    document.querySelectorAll('.line-tab').forEach(b => {
+      b.onclick = function(){
+        document.querySelectorAll('.line-tab').forEach(x => x.classList.remove('active'));
+        this.classList.add('active');
+        renderLine(parseInt(this.dataset.line));
+      };
+    });
+
+    document.getElementById('closeDetail').onclick = ()=>{ detailSheet.style.display = 'none'; if(lastFocus) lastFocus.focus(); };
+
+  } catch(e){ detailPanel.innerHTML = '<div class="empty">详情加载失败</div>'; }
+}
+
+// ----- 播放核心（含拦截脚本注入） -----
+function playEpisode(url, title){
+  // 加载播放页 iframe，并注入拦截脚本
+  detailSheet.style.display = 'none'; // 隐藏详情，显示播放器
+  // 在 content 区域嵌入 iframe
+  content.innerHTML = `
+    <div style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:50;background:#000;">
+      <button id="closePlayer" style="position:absolute;top:20px;right:20px;z-index:60;background:rgba(0,0,0,.6);color:#fff;border:1px solid #555;padding:8px 16px;border-radius:8px;">× 关闭</button>
+      <iframe id="playerIframe" src="${abs(url)}" style="width:100%;height:100%;border:0;"></iframe>
+    </div>
+  `;
+
+  // 注入拦截脚本到 iframe
+  const iframe = document.getElementById('playerIframe');
+  iframe.addEventListener('load', function(){
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      if(!doc) return;
+      // 注入拦截脚本（与 huavod-inject.js 相同逻辑）
+      const script = doc.createElement('script');
+      script.textContent = `
+        (function(){
+          function whenFm(){
+            if(window.fm) return Promise.resolve(window.fm);
+            return new Promise(resolve=>window.addEventListener('fmsdk', ()=>resolve(window.fm), {once:true}));
+          }
+          whenFm().then(fm=>{
+            let lastUrl = '';
+            function trigger(url){
+              if(!url || url===lastUrl) return;
+              if(url.includes('.m3u8') && !url.includes('taobao')){
+                lastUrl = url;
+                console.log('[华视播放] 捕获 m3u8:', url);
+                fm.play(url, document.title || '华视', { headers:{Referer:location.href}, credentials:'include' });
+              }
+            }
+            // 拦截 fetch
+            const origFetch = window.fetch;
+            window.fetch = function(){
+              const url = typeof arguments[0]==='string' ? arguments[0] : (arguments[0]&&arguments[0].url);
+              if(url && url.includes('.m3u8') && !url.includes('taobao')) trigger(url);
+              return origFetch.apply(this, arguments);
+            };
+            // 拦截 XHR
+            const origOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url){
+              if(url && url.includes('.m3u8') && !url.includes('taobao')){
+                this.addEventListener('load', ()=>trigger(url));
+              }
+              return origOpen.apply(this, arguments);
+            };
+            // 广告跳过
+            setInterval(()=>{
+              const video = document.querySelector('video');
+              if(!video) return;
+              const src = video.currentSrc || video.src || '';
+              if(src.includes('.mp4') || src.includes('preroll') || src.includes('taobao')){
+                video.muted = true;
+                video.playbackRate = 16;
+                if(video.duration) video.currentTime = video.duration - 0.1;
+              } else {
+                video.playbackRate = 1;
+                if(src.includes('.m3u8')) trigger(src);
+              }
+            }, 400);
+            console.log('[华视播放] 注入脚本已运行');
+          });
+        })();
+      `;
+      doc.head.appendChild(script);
+    } catch(e){ console.warn('注入 iframe 失败', e); }
+  });
+
+  document.getElementById('closePlayer').onclick = function(){
+    content.innerHTML = ''; // 清除播放器
+    // 重新加载当前分类
+    loadCategory(currentUrl, currentPage);
+  };
+}
+
+// ----- 初始化 -----
+function init(){
+  renderTabs(CATS[0][1]);
+  $('#searchForm').onsubmit = e => { e.preventDefault(); search($('#kw').value); };
+  loadCategory(CATS[0][1], 1);
+}
+
+waitFm().then(()=>{
+  console.log('[华视] SDK 就绪');
+  init();
+}).catch(()=>{
+  console.warn('[华视] SDK 未就绪，使用普通模式');
+  init();
+});
+
+})();
+</script>
+</body>
+</html>
