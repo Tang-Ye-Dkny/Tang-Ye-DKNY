@@ -1,0 +1,28 @@
+{
+  "sites": [
+    {
+  "key": "Nostrxxx",
+  "name": "Nostr推荐xxx",
+  "type": 3,
+  "api": "csp_Nostr",
+  "homePage": "https://www.252035.xyz/xs/tvbox/nostr.html"
+},
+    {
+      "key": "XXXXX-tv",
+      "name": "XXXXX (雲端優化版)",
+      "type": 3,
+      "api": "csp_Builtin",
+      "homePage": "https://www.XXXXX.com", 
+      "extensions": [
+        {
+          "id": "XXXXX-injector",
+          "name": "去廣告與原生播放器",
+          "runAt": "document-end",
+          "js": [
+            "https://www.252035.xyz/xs/tvbox/XXXXX-inject.js"
+          ]
+        }
+      ]
+    }
+  ]
+}
