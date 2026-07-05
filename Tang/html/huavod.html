@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 <title>华视影院 WebHome</title>
 <style>
-  /* 样式与之前相同，为节省篇幅省略，可沿用之前版本 */
+  /* 样式略（与之前相同） */
   :root{--panel-rgb:42,50,58;--panel:rgba(var(--panel-rgb),.62);--panel-soft:rgba(var(--panel-rgb),.44);--panel-strong:rgba(var(--panel-rgb),.86);--line:rgba(255,255,255,.16);--text:#f7fbff;--muted:rgba(247,251,255,.68);--accent:#6c5ce7;--accent2:#a29bfe;--bad:#ff5c7a;--ok:#68e39a;--radius:18px;--shadow:0 18px 50px rgba(0,0,0,.28)}
   *{box-sizing:border-box} html,body{margin:0;min-height:100%;background:transparent;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif} html:not(.fm-native),html:not(.fm-native) body{background:#222a32}.app{min-height:100vh;background:transparent;padding:10px 10px 28px}.top{position:relative;z-index:1;background:transparent;backdrop-filter:none;padding:8px 0 10px;border-bottom:0}.bar{display:flex;align-items:center;gap:8px}.brand{flex:0 0 auto;font-size:21px;font-weight:900;letter-spacing:.5px;text-shadow:0 2px 14px rgba(0,0,0,.35)}.brand b{color:var(--accent2)}.search{flex:1;display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 7px 6px 13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}.search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:15px}.search input::placeholder{color:var(--muted)}button,.btn{border:1px solid var(--line);background:var(--panel-soft);color:var(--text);border-radius:999px;padding:8px 12px;font-size:14px;cursor:pointer}.btn.primary,button.primary{border-color:rgba(255,107,53,.45);background:linear-gradient(135deg,rgba(255,107,53,.90),rgba(255,184,107,.72));color:#17110d;font-weight:800}.tabs{display:flex;gap:8px;overflow:auto;padding:10px 2px 0;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{white-space:nowrap;border-radius:999px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--muted)}.tab.active{background:linear-gradient(135deg,rgba(255,107,53,.55),rgba(255,184,107,.30));color:var(--text);border-color:rgba(255,184,107,.58);font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.card{position:relative;min-width:0;border-radius:15px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045));border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 28px rgba(0,0,0,.22);cursor:pointer}.poster{aspect-ratio:3/4;background:rgba(255,255,255,.08);overflow:hidden;position:relative}.poster img{width:100%;height:100%;object-fit:cover;display:block}.meta{padding:8px 8px 10px;background:linear-gradient(180deg,rgba(18,24,30,.15),rgba(18,24,30,.44))}.name{font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.remark{margin-top:4px;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.section{margin:16px 0}.section-title{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}.section-title h2{margin:0;font-size:17px;letter-spacing:.3px}.detail-panel{background:linear-gradient(135deg,rgba(40,30,64,.68),rgba(24,20,42,.54));border:1px solid rgba(255,255,255,.10);border-radius:22px;box-shadow:var(--shadow);padding:18px 14px 22px;margin-bottom:42px}.detail-head{display:grid;grid-template-columns:38% 1fr;gap:16px;align-items:start}.detail-pic{width:100%;aspect-ratio:3/4;border-radius:16px;object-fit:cover;background:rgba(255,255,255,.08)}.detail-title{font-size:22px;font-weight:600;margin:0 0 8px;line-height:1.25}.detail-info{font-size:14px;color:var(--muted);line-height:1.6}.desc{font-size:15px;color:var(--muted);line-height:1.75;margin:12px 0}.line-tabs{display:flex;gap:8px;overflow-x:auto;margin:8px 0}.line-tab{padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);cursor:pointer;white-space:nowrap}.line-tab.active{background:rgba(255,184,107,.3);border-color:var(--accent2)}.episodes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.ep{padding:8px 4px;text-align:center;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--line);cursor:pointer}.empty{padding:30px 18px;text-align:center;color:var(--muted)}.focusable:focus{outline:2px solid rgba(255,184,107,.76);outline-offset:2px}
   @media (min-width:720px){.grid{grid-template-columns:repeat(5,minmax(0,1fr))}.detail-head{grid-template-columns:160px 1fr}.detail-pic{width:160px}}
@@ -54,7 +54,6 @@ let currentUrl = BASE + CATS[0][1];
 let currentPage = 1;
 let lastFocus = null;
 
-// ============ DOM 引用 ============
 const $ = s => document.querySelector(s);
 const content = $('#content');
 const status = $('#status');
@@ -88,7 +87,7 @@ async function reqText(url){
 
 function doc(html){ return new DOMParser().parseFromString(html, 'text/html'); }
 
-// ============ 广告清理（外层） ============
+// ============ 广告清理 ============
 function removeOuterAds(){
   try {
     document.querySelectorAll('img[src*="static.okokserver.com/img/"]').forEach(function(img){
@@ -268,7 +267,7 @@ async function openDetail(url){
   } catch(e){ detailPanel.innerHTML = '<div class="empty">详情加载失败</div>'; }
 }
 
-// ============ 播放核心（无 iframe，直接解析） ============
+// ============ 播放核心（无iframe，直接解析播放页HTML） ============
 async function playEpisode(url, title){
   // 关闭详情浮层
   detailSheet.style.display = 'none';
@@ -277,18 +276,22 @@ async function playEpisode(url, title){
   try {
     // 1. 获取播放页 HTML
     const html = await reqText(url);
-    // 2. 提取 player_aaaa 对象
+    console.log('[华视] 播放页HTML长度:', html.length);
+
+    // 2. 尝试提取 player_aaaa 对象
     const match = html.match(/var\s+player_aaaa\s*=\s*(\{[\s\S]*?\})\s*<\/script>/);
     if (!match) {
       status.textContent = '未找到播放数据';
+      console.warn('[华视] 未找到 player_aaaa');
       return;
     }
     let playerData;
     try {
-      // 替换可能的转义字符并解析
       playerData = JSON.parse(match[1].replace(/\\\//g, '/'));
+      console.log('[华视] playerData:', playerData);
     } catch(e) {
       status.textContent = '解析播放数据失败';
+      console.warn('[华视] JSON解析失败:', e);
       return;
     }
 
@@ -296,38 +299,43 @@ async function playEpisode(url, title){
     let playUrl = playerData.url || '';
     if (!playUrl) {
       status.textContent = '未获取到播放地址';
+      console.warn('[华视] playerData.url 为空');
       return;
     }
-    // 如果是相对路径，补全
+
+    // 处理相对路径
     if (playUrl.startsWith('//')) playUrl = 'https:' + playUrl;
     else if (playUrl.startsWith('/')) playUrl = BASE + playUrl;
+    else if (!playUrl.startsWith('http')) playUrl = BASE + '/' + playUrl;
 
-    // 4. 如果地址不是 .m3u8，可能是页面，需要进一步请求（但华视通常直接是 m3u8）
-    if (playUrl.includes('.m3u8')) {
-      // 直接播放
+    console.log('[华视] 解析到播放地址:', playUrl);
+
+    // 4. 检查是否为有效媒体地址
+    if (playUrl.includes('.m3u8') || playUrl.includes('.mp4')) {
       const fm = await waitFm();
       if (fm) {
         status.textContent = '正在播放…';
-        fm.play(playUrl, title, {
+        fm.play(playUrl, title || '华视视频', {
           headers: { Referer: url, 'User-Agent': UA },
           credentials: 'include'
         }).then(() => {
           status.textContent = '播放中';
         }).catch(e => {
           status.textContent = '播放失败: ' + e.message;
+          console.error('[华视] fm.play 失败:', e);
         });
       } else {
         status.textContent = 'fm SDK 未就绪';
       }
     } else {
-      // 如果不确定，尝试将地址作为播放页再次请求（递归？但可能导致死循环，暂时放弃）
-      status.textContent = '未知播放地址格式';
-      console.warn('未知播放地址:', playUrl);
+      // 如果不是直接媒体地址，可能是另一个页面，尝试再次请求（但这里放弃）
+      status.textContent = '地址不是媒体格式: ' + playUrl;
+      console.warn('[华视] 非媒体地址:', playUrl);
     }
 
   } catch(e) {
     status.textContent = '解析失败: ' + e.message;
-    console.error(e);
+    console.error('[华视] 播放解析异常:', e);
   }
 }
 
