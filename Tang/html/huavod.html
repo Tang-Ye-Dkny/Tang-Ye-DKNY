@@ -2,358 +2,717 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
 <title>华视影院 WebHome</title>
 <style>
-  /* 样式略（与之前相同） */
-  :root{--panel-rgb:42,50,58;--panel:rgba(var(--panel-rgb),.62);--panel-soft:rgba(var(--panel-rgb),.44);--panel-strong:rgba(var(--panel-rgb),.86);--line:rgba(255,255,255,.16);--text:#f7fbff;--muted:rgba(247,251,255,.68);--accent:#6c5ce7;--accent2:#a29bfe;--bad:#ff5c7a;--ok:#68e39a;--radius:18px;--shadow:0 18px 50px rgba(0,0,0,.28)}
-  *{box-sizing:border-box} html,body{margin:0;min-height:100%;background:transparent;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif} html:not(.fm-native),html:not(.fm-native) body{background:#222a32}.app{min-height:100vh;background:transparent;padding:10px 10px 28px}.top{position:relative;z-index:1;background:transparent;backdrop-filter:none;padding:8px 0 10px;border-bottom:0}.bar{display:flex;align-items:center;gap:8px}.brand{flex:0 0 auto;font-size:21px;font-weight:900;letter-spacing:.5px;text-shadow:0 2px 14px rgba(0,0,0,.35)}.brand b{color:var(--accent2)}.search{flex:1;display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 7px 6px 13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}.search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:15px}.search input::placeholder{color:var(--muted)}button,.btn{border:1px solid var(--line);background:var(--panel-soft);color:var(--text);border-radius:999px;padding:8px 12px;font-size:14px;cursor:pointer}.btn.primary,button.primary{border-color:rgba(255,107,53,.45);background:linear-gradient(135deg,rgba(255,107,53,.90),rgba(255,184,107,.72));color:#17110d;font-weight:800}.tabs{display:flex;gap:8px;overflow:auto;padding:10px 2px 0;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{white-space:nowrap;border-radius:999px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--muted)}.tab.active{background:linear-gradient(135deg,rgba(255,107,53,.55),rgba(255,184,107,.30));color:var(--text);border-color:rgba(255,184,107,.58);font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.card{position:relative;min-width:0;border-radius:15px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.045));border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 28px rgba(0,0,0,.22);cursor:pointer}.poster{aspect-ratio:3/4;background:rgba(255,255,255,.08);overflow:hidden;position:relative}.poster img{width:100%;height:100%;object-fit:cover;display:block}.meta{padding:8px 8px 10px;background:linear-gradient(180deg,rgba(18,24,30,.15),rgba(18,24,30,.44))}.name{font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.remark{margin-top:4px;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.section{margin:16px 0}.section-title{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}.section-title h2{margin:0;font-size:17px;letter-spacing:.3px}.detail-panel{background:linear-gradient(135deg,rgba(40,30,64,.68),rgba(24,20,42,.54));border:1px solid rgba(255,255,255,.10);border-radius:22px;box-shadow:var(--shadow);padding:18px 14px 22px;margin-bottom:42px}.detail-head{display:grid;grid-template-columns:38% 1fr;gap:16px;align-items:start}.detail-pic{width:100%;aspect-ratio:3/4;border-radius:16px;object-fit:cover;background:rgba(255,255,255,.08)}.detail-title{font-size:22px;font-weight:600;margin:0 0 8px;line-height:1.25}.detail-info{font-size:14px;color:var(--muted);line-height:1.6}.desc{font-size:15px;color:var(--muted);line-height:1.75;margin:12px 0}.line-tabs{display:flex;gap:8px;overflow-x:auto;margin:8px 0}.line-tab{padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);cursor:pointer;white-space:nowrap}.line-tab.active{background:rgba(255,184,107,.3);border-color:var(--accent2)}.episodes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.ep{padding:8px 4px;text-align:center;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--line);cursor:pointer}.empty{padding:30px 18px;text-align:center;color:var(--muted)}.focusable:focus{outline:2px solid rgba(255,184,107,.76);outline-offset:2px}
-  @media (min-width:720px){.grid{grid-template-columns:repeat(5,minmax(0,1fr))}.detail-head{grid-template-columns:160px 1fr}.detail-pic{width:160px}}
-  @media (max-width:480px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  /* ===== 样式：复用歪比，增加详情浮层 ===== */
+  :root{--panel-rgb:42,50,58;--panel:rgba(var(--panel-rgb),0.62);--panel-soft:rgba(var(--panel-rgb),0.44);--panel-strong:rgba(var(--panel-rgb),0.86);--line:rgba(255,255,255,0.16);--text:#f7fbff;--muted:rgba(247,251,255,0.68);--accent:#ff6b35;--accent2:#ffb86b;--radius:16px;--shadow:0 12px 40px rgba(0,0,0,0.3)}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:transparent;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+  html:not(.fm-native) body{background:#1e242a}
+  .app{min-height:100vh;background:transparent;padding:8px 10px 30px}
+  .top{position:relative;z-index:1;padding:6px 0 8px;border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:6px}
+  .brand{flex:0 0 auto;font-size:20px;font-weight:900}.brand b{color:var(--accent2)}
+  .search{flex:1;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.14);border-radius:999px;padding:4px 5px 4px 12px}
+  .search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:15px}
+  .search input::placeholder{color:var(--muted)}
+  .btn{background:var(--panel-soft);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer}
+  .btn.primary{background:linear-gradient(135deg,rgba(255,107,53,0.85),rgba(255,184,107,0.7));border-color:rgba(255,184,107,0.6);color:#17110d;font-weight:700}
+  .tabs{display:flex;gap:6px;overflow:auto;padding:8px 2px 0;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;border-radius:999px;padding:6px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--muted);cursor:pointer}
+  .tab.active{background:linear-gradient(135deg,rgba(255,107,53,0.45),rgba(255,184,107,0.25));color:var(--text);border-color:rgba(255,184,107,0.6);font-weight:700}
+  .status{margin:8px 2px 6px;color:var(--muted);font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .card{position:relative;min-width:0;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.04));border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;transition:transform .15s}
+  .card:focus,.card:hover{transform:translateY(-2px);outline:2px solid var(--accent2);outline-offset:2px}
+  .poster{aspect-ratio:3/4;background:rgba(255,255,255,0.06);overflow:hidden;position:relative}
+  .poster img{width:100%;height:100%;object-fit:cover;display:block}
+  .poster .noimg{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:24px}
+  .meta{padding:6px 8px 8px}
+  .name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .remark{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .section{margin:14px 0}
+  .section-title{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+  .section-title h2{margin:0;font-size:16px}
+  .empty{padding:24px 16px;text-align:center;color:var(--muted);background:var(--panel-soft);border:1px dashed var(--line);border-radius:var(--radius)}
+  .loading{opacity:.7}
+
+  /* ===== 详情浮层 ===== */
+  .sheet{position:fixed;inset:0;z-index:40;display:none;background:transparent;overflow:hidden}
+  .sheet.active{display:block}
+  .sheet-inner{height:100vh;padding:12px;background:transparent;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .detail-panel{background:linear-gradient(135deg,rgba(40,30,64,0.7),rgba(24,20,42,0.6));border:1px solid rgba(255,255,255,0.10);border-radius:22px;box-shadow:var(--shadow);padding:16px 14px 22px;margin-bottom:30px}
+  .detail-head{display:grid;grid-template-columns:38% 1fr;gap:14px;align-items:start}
+  .detail-pic{width:100%;aspect-ratio:3/4;border-radius:14px;object-fit:cover;background:rgba(255,255,255,0.08);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+  .detail-title{font-size:22px;font-weight:600;margin:0 0 6px;line-height:1.2}
+  .detail-info{font-size:14px;line-height:1.6;color:var(--muted)}
+  .detail-info b{color:rgba(255,255,255,0.8);margin-right:4px}
+  .intro-pill{display:inline-block;margin:18px 0 12px;padding:8px 22px;border-radius:999px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,184,107,0.5);color:rgba(255,255,255,0.9);font-size:16px;font-weight:600}
+  .desc{color:rgba(255,255,255,0.7);font-size:16px;line-height:1.7;margin:0 2px 14px}
+  .play-title{margin:12px 2px 6px;font-size:16px;font-weight:700}
+  .line-tabs{display:flex;gap:6px;overflow-x:auto;margin:6px 0 8px;padding-bottom:2px}
+  .line-tab{border-radius:999px;padding:6px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);white-space:nowrap;color:rgba(255,255,255,0.8);cursor:pointer}
+  .line-tab.active{background:rgba(255,107,53,0.35);border-color:rgba(255,184,107,0.6);font-weight:700}
+  .episodes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+  .ep{border-radius:12px;padding:8px 4px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);cursor:pointer;text-align:center;font-size:14px}
+  .ep:focus,.ep:hover{background:rgba(255,107,53,0.25);outline:2px solid var(--accent2)}
+  #closeDetail{margin:0 0 12px;padding:8px 20px;border-radius:999px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,184,107,0.5);cursor:pointer}
+  body.detail-active .app{visibility:hidden;pointer-events:none}
+
+  /* ===== 响应式 ===== */
+  @media(min-width:720px){.grid{grid-template-columns:repeat(5,1fr)}.app{padding:16px 30px 40px}.detail-head{grid-template-columns:160px 1fr}.detail-pic{width:160px}.episodes{grid-template-columns:repeat(6,1fr)}}
+  @media(min-width:1100px){.grid{grid-template-columns:repeat(7,1fr)}.app{max-width:1380px;margin:0 auto}.sheet-inner{max-width:1180px;margin:0 auto}}
+  @media(max-width:480px){.app{padding:6px 6px 20px}.grid{grid-template-columns:repeat(3,1fr);gap:6px}.meta{padding:5px 6px 6px}.name{font-size:12px}.remark{font-size:10px}.detail-head{grid-template-columns:38% 1fr}.detail-title{font-size:20px}.episodes{grid-template-columns:repeat(4,1fr)}.ep{font-size:13px;padding:7px 2px}}
+  html.no-layout-gap .grid{gap:6px} html.no-layout-gap .episodes{gap:6px}
+  html.no-aspect-ratio .poster{height:0;padding-bottom:133.33%;position:relative}
+  html.no-aspect-ratio .poster img{position:absolute;top:0;left:0;width:100%;height:100%}
+  html.no-css-functions .detail-panel{border-radius:14px}
 </style>
 </head>
 <body>
-
 <div class="app" id="app">
   <div class="top">
     <div class="bar">
       <div class="brand">华视<b>影院</b></div>
       <form class="search" id="searchForm">
-        <input id="kw" type="text" placeholder="搜索影片..." autocomplete="off" />
-        <button class="primary" type="submit">搜索</button>
+        <input id="kw" type="text" placeholder="搜索影片、剧集…" autocomplete="off" />
+        <button class="btn primary" type="submit">搜索</button>
       </form>
     </div>
     <div class="tabs" id="tabs"></div>
   </div>
-  <div class="status" id="status">加载中…</div>
+  <div class="status" id="status">准备加载…</div>
   <main id="content"></main>
 </div>
 
 <!-- 详情浮层 -->
-<div id="detailSheet" style="position:fixed;inset:0;z-index:40;display:none;background:rgba(0,0,0,.85);overflow-y:auto;padding:20px;">
-  <div class="detail-panel" id="detailPanel"></div>
-</div>
+<div class="sheet" id="detailSheet"><div class="sheet-inner"><div class="detail-panel" id="detailPanel"></div></div></div>
 
 <script>
-(function(){
-'use strict';
-
-// ============ 配置 ============
-const BASE = 'https://huavod.com';
-const UA = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36';
-const CATS = [
-  ['电影', '/vodshow/1--------1---.html'],
-  ['电视剧', '/vodshow/2--------1---.html'],
-  ['综艺', '/vodshow/3--------1---.html'],
-  ['动漫', '/vodshow/4--------1---.html'],
-  ['短剧', '/vodshow/5--------1---.html'],
-  ['纪录片', '/vodshow/42--------1---.html']
-];
-
-let currentUrl = BASE + CATS[0][1];
-let currentPage = 1;
-let lastFocus = null;
-
-const $ = s => document.querySelector(s);
-const content = $('#content');
-const status = $('#status');
-const tabs = $('#tabs');
-const detailSheet = $('#detailSheet');
-const detailPanel = $('#detailPanel');
-
-// ============ 工具函数 ============
-function abs(u){ try{ return new URL(u, BASE).href } catch(e){ return u || '' } }
-function esc(s){ return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])) }
-function clean(s){ return String(s||'').replace(/\s+/g,' ').trim() }
-function imgUrl(u){ u=abs(u||''); if(!u) return ''; try{ return window.fm && fm.res ? fm.res(u, {headers:{Referer:BASE+'/', 'User-Agent':UA}}) : u } catch(e){ return u } }
-
-function waitFm(){ if(window.fm) return Promise.resolve(window.fm); return new Promise(r=>{ window.addEventListener('fmsdk', ()=>r(window.fm), {once:true}); setTimeout(()=>r(window.fm), 2000); }); }
-
-async function reqText(url){
-  url = abs(url);
-  status.textContent = '加载：' + url;
-  const headers = {'User-Agent':UA, 'Referer':BASE+'/', 'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'};
-  try {
-    if(window.fm && fm.req){
-      let r = await fm.req(url, {method:'GET', headers, responseType:'text', timeout:20, credentials:'include'});
-      if(!r.ok) throw new Error(r.error || ('HTTP '+r.status));
-      return r.body || '';
-    }
-    let r = await fetch(url, {headers, cache:'no-store'});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return await r.text();
-  } catch(e){ status.textContent = '加载失败：'+e.message; throw e; }
-}
-
-function doc(html){ return new DOMParser().parseFromString(html, 'text/html'); }
-
-// ============ 广告清理 ============
-function removeOuterAds(){
-  try {
-    document.querySelectorAll('img[src*="static.okokserver.com/img/"]').forEach(function(img){
-      var container = img.closest('a, div[class*="ad"], div[class*="banner"], .love-item, .player-right .switch-box, .check, .plist-body, #player-vip, .ucl-final-banner, .love-row-wrap');
-      if(container) container.style.display = 'none';
-      else img.style.display = 'none';
-    });
-    document.querySelectorAll('.love-row-wrap, .love-item, #player-vip, .ucl-final-banner, .player-news, .switch-box .item img[src*="okokserver"]').forEach(function(el){
-      if(el) el.style.display = 'none';
-    });
-    document.querySelectorAll('img[src$=".gif"]').forEach(function(img){
-      var container = img.closest('a, div');
-      if(container) container.style.display = 'none';
-    });
-  } catch(e){}
-}
-function watchOuterAds(){
-  removeOuterAds();
-  var mo = new MutationObserver(function(){ removeOuterAds(); });
-  mo.observe(document.body, { childList: true, subtree: true });
-}
-
-// ============ 解析函数 ============
-function parseVodList(html){
-  const d = doc(html);
-  const items = [];
-  d.querySelectorAll('.public-list-box, .vod-list-item, .module-item').forEach(box => {
-    const a = box.querySelector('a[href*="/voddetail/"]');
-    if(!a) return;
-    const href = abs(a.getAttribute('href'));
-    const img = box.querySelector('img');
-    const image = img ? (img.getAttribute('data-src') || img.getAttribute('src') || '') : '';
-    const title = a.getAttribute('title') || a.textContent.trim() || '';
-    const remark = box.querySelector('.public-list-prb, .remarks, .vod-remarks')?.textContent || '';
-    if(title && href) items.push({ title:clean(title), remark:clean(remark), href, image:abs(image) });
-  });
-  return items;
-}
-
-function parseDetail(html){
-  const d = doc(html);
-  const title = d.querySelector('h1.vod-title-seo, h1')?.textContent?.replace(/ - .*$/, '').trim() || '未知影片';
-  const pic = d.querySelector('img[data-src]')?.getAttribute('data-src') || d.querySelector('.detail-pic img')?.src || '';
-  const desc = d.querySelector('.vod_content, .content_desc, .detail-content')?.textContent?.trim() || '暂无简介';
-  const lineTabs = d.querySelectorAll('.anthology-tab a');
-  const lineNames = [];
-  lineTabs.forEach(a => { const name = a.textContent.trim(); if(name) lineNames.push(name); });
-  if(lineNames.length === 0) lineNames.push('默认线路');
-  const listBoxes = d.querySelectorAll('.anthology-list-box, .episode-list, .play-list');
-  const lines = [];
-  listBoxes.forEach((box, idx) => {
-    const eps = [];
-    box.querySelectorAll('a').forEach(a => {
-      const href = abs(a.getAttribute('href') || '');
-      const name = a.textContent.trim();
-      if(href && name) eps.push({ name, href });
-    });
-    if(eps.length) lines.push({ name: lineNames[idx] || ('线路'+(idx+1)), eps });
-  });
-  if(lines.length === 0){
-    const eps = [];
-    d.querySelectorAll('a[href*="/vodplay/"]').forEach(a => {
-      const href = abs(a.href);
-      const name = a.textContent.trim();
-      if(href && name) eps.push({ name, href });
-    });
-    if(eps.length) lines.push({ name: '默认线路', eps });
+// ============================================================
+// 兼容引导层 (ES5 + polyfill)
+// ============================================================
+(function() {
+  'use strict';
+  if (window.fongmiBridge || window.fm || window.fongmi) {
+    document.documentElement.classList.add('fm-native');
   }
-  return { title, pic:abs(pic), desc, lines };
-}
-
-// ============ 渲染 ============
-function renderTabs(activeUrl){
-  tabs.innerHTML = CATS.map(([n,path]) => `<button class="tab ${abs(path)===abs(activeUrl)?'active':''}" data-url="${abs(path)}">${esc(n)}</button>`).join('');
-  tabs.querySelectorAll('.tab').forEach(b => b.onclick = ()=>loadCategory(b.dataset.url, 1));
-}
-
-function renderSections(items, title='影片列表'){
-  if(!items || items.length === 0){
-    content.innerHTML = '<div class="empty">暂无内容</div>';
-    return;
-  }
-  content.innerHTML = `
-    <section class="section">
-      <div class="section-title"><h2>${esc(title)}</h2></div>
-      <div class="grid">
-        ${items.map(it => `
-          <article class="card focusable" data-href="${esc(it.href)}">
-            <div class="poster">${it.image ? `<img loading="lazy" referrerpolicy="no-referrer" src="${esc(imgUrl(it.image))}" alt="${esc(it.title)}">` : '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted)">华</div>'}</div>
-            <div class="meta"><div class="name">${esc(it.title)}</div><div class="remark">${esc(it.remark)}</div></div>
-          </article>
-        `).join('')}
-      </div>
-    </section>
-  `;
-  content.querySelectorAll('.card').forEach(c => c.onclick = ()=>openDetail(c.dataset.href));
-}
-
-// ============ 加载分类 ============
-async function loadCategory(url, page){
-  currentUrl = abs(url);
-  currentPage = page;
-  renderTabs(currentUrl);
-  content.innerHTML = '<div class="empty">加载中…</div>';
-  try {
-    let pageUrl = currentUrl.replace(/---\.html$/, `---${page}.html`);
-    if(!pageUrl.includes(`---${page}.html`)) pageUrl = currentUrl + (currentUrl.includes('?')?'&':'?') + 'page='+page;
-    const html = await reqText(pageUrl);
-    const items = parseVodList(html);
-    if(items.length === 0) { content.innerHTML = '<div class="empty">暂无内容</div>'; return; }
-    renderSections(items, '分类列表');
-    status.textContent = `第 ${page} 页，共 ${items.length} 条`;
-  } catch(e){ content.innerHTML = '<div class="empty">加载失败</div>'; }
-}
-
-// ============ 搜索 ============
-async function search(q){
-  q = clean(q); if(!q) return;
-  content.innerHTML = '<div class="empty">搜索中…</div>';
-  try {
-    const url = `${BASE}/vodsearch.html?wd=${encodeURIComponent(q)}&page=1`;
-    const html = await reqText(url);
-    const items = parseVodList(html);
-    if(!items.length) { content.innerHTML = '<div class="empty">未找到相关结果</div>'; return; }
-    renderSections(items, '搜索结果：'+q);
-  } catch(e){ content.innerHTML = '<div class="empty">搜索失败</div>'; }
-}
-
-// ============ 详情 ============
-async function openDetail(url){
-  lastFocus = document.activeElement;
-  detailSheet.style.display = 'block';
-  detailPanel.innerHTML = '<div class="empty">加载详情…</div>';
-  try {
-    const html = await reqText(url);
-    const detail = parseDetail(html);
-    let firstLine = detail.lines[0] || { name:'默认线路', eps:[] };
-
-    detailPanel.innerHTML = `
-      <button id="closeDetail" class="btn" style="margin-bottom:12px;">← 返回</button>
-      <div class="detail-head">
-        <img class="detail-pic" referrerpolicy="no-referrer" src="${esc(imgUrl(detail.pic))}" onerror="this.style.display='none'">
-        <div>
-          <div class="detail-title">${esc(detail.title)}</div>
-          <div class="detail-info">${esc(detail.desc)}</div>
-        </div>
-      </div>
-      <div class="play-title">播放线路</div>
-      <div class="line-tabs" id="lineTabs">
-        ${detail.lines.map((ln,i) => `<button class="line-tab ${i===0?'active':''}" data-line="${i}">${esc(ln.name)} (${ln.eps.length})</button>`).join('')}
-      </div>
-      <div class="episodes" id="epGrid"></div>
-    `;
-
-    function renderLine(idx){
-      const line = detail.lines[idx] || firstLine;
-      const grid = document.getElementById('epGrid');
-      if(!grid) return;
-      grid.innerHTML = line.eps.map(ep => `<button class="ep focusable" data-href="${esc(ep.href)}">${esc(ep.name)}</button>`).join('');
-      grid.querySelectorAll('.ep').forEach(b => b.onclick = ()=>playEpisode(b.dataset.href, detail.title + ' ' + b.textContent));
-    }
-    renderLine(0);
-
-    document.querySelectorAll('.line-tab').forEach(b => {
-      b.onclick = function(){
-        document.querySelectorAll('.line-tab').forEach(x => x.classList.remove('active'));
-        this.classList.add('active');
-        renderLine(parseInt(this.dataset.line));
-      };
-    });
-
-    document.getElementById('closeDetail').onclick = ()=>{
-      detailSheet.style.display = 'none';
-      if(lastFocus) lastFocus.focus();
-    };
-
-  } catch(e){ detailPanel.innerHTML = '<div class="empty">详情加载失败</div>'; }
-}
-
-// ============ 播放核心（无iframe，直接解析播放页HTML） ============
-async function playEpisode(url, title){
-  // 关闭详情浮层
-  detailSheet.style.display = 'none';
-  status.textContent = '正在解析播放地址…';
-
-  try {
-    // 1. 获取播放页 HTML
-    const html = await reqText(url);
-    console.log('[华视] 播放页HTML长度:', html.length);
-
-    // 2. 尝试提取 player_aaaa 对象
-    const match = html.match(/var\s+player_aaaa\s*=\s*(\{[\s\S]*?\})\s*<\/script>/);
-    if (!match) {
-      status.textContent = '未找到播放数据';
-      console.warn('[华视] 未找到 player_aaaa');
-      return;
-    }
-    let playerData;
-    try {
-      playerData = JSON.parse(match[1].replace(/\\\//g, '/'));
-      console.log('[华视] playerData:', playerData);
-    } catch(e) {
-      status.textContent = '解析播放数据失败';
-      console.warn('[华视] JSON解析失败:', e);
-      return;
-    }
-
-    // 3. 获取视频地址
-    let playUrl = playerData.url || '';
-    if (!playUrl) {
-      status.textContent = '未获取到播放地址';
-      console.warn('[华视] playerData.url 为空');
-      return;
-    }
-
-    // 处理相对路径
-    if (playUrl.startsWith('//')) playUrl = 'https:' + playUrl;
-    else if (playUrl.startsWith('/')) playUrl = BASE + playUrl;
-    else if (!playUrl.startsWith('http')) playUrl = BASE + '/' + playUrl;
-
-    console.log('[华视] 解析到播放地址:', playUrl);
-
-    // 4. 检查是否为有效媒体地址
-    if (playUrl.includes('.m3u8') || playUrl.includes('.mp4')) {
-      const fm = await waitFm();
-      if (fm) {
-        status.textContent = '正在播放…';
-        fm.play(playUrl, title || '华视视频', {
-          headers: { Referer: url, 'User-Agent': UA },
-          credentials: 'include'
-        }).then(() => {
-          status.textContent = '播放中';
-        }).catch(e => {
-          status.textContent = '播放失败: ' + e.message;
-          console.error('[华视] fm.play 失败:', e);
-        });
-      } else {
-        status.textContent = 'fm SDK 未就绪';
+  if (!Element.prototype.replaceChildren) {
+    Element.prototype.replaceChildren = function() {
+      this.innerHTML = '';
+      for (var i = 0; i < arguments.length; i++) {
+        var node = arguments[i];
+        if (typeof node === 'string') node = document.createTextNode(node);
+        this.appendChild(node);
       }
-    } else {
-      // 如果不是直接媒体地址，可能是另一个页面，尝试再次请求（但这里放弃）
-      status.textContent = '地址不是媒体格式: ' + playUrl;
-      console.warn('[华视] 非媒体地址:', playUrl);
+    };
+  }
+  if (!Object.values) {
+    Object.values = function(obj) {
+      var arr = [];
+      for (var k in obj) if (obj.hasOwnProperty(k)) arr.push(obj[k]);
+      return arr;
+    };
+  }
+  if (!Object.entries) {
+    Object.entries = function(obj) {
+      var arr = [];
+      for (var k in obj) if (obj.hasOwnProperty(k)) arr.push([k, obj[k]]);
+      return arr;
+    };
+  }
+  if (!Array.from) {
+    Array.from = function(arrLike) { return Array.prototype.slice.call(arrLike); };
+  }
+  if (!Array.prototype.includes) {
+    Array.prototype.includes = function(val) { return this.indexOf(val) !== -1; };
+  }
+  if (!NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = function(fn) {
+      for (var i = 0; i < this.length; i++) fn(this[i], i);
+    };
+  }
+  if (!String.prototype.includes) {
+    String.prototype.includes = function(search, start) {
+      return this.indexOf(search, start) !== -1;
+    };
+  }
+  if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(search, pos) {
+      return this.substr(pos || 0, search.length) === search;
+    };
+  }
+  if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function(search, len) {
+      var end = len || this.length;
+      return this.substring(end - search.length, end) === search;
+    };
+  }
+  (function() {
+    var test = document.createElement('div');
+    test.style.display = 'flex';
+    test.style.gap = '1px';
+    document.body.appendChild(test);
+    var computed = getComputedStyle(test).gap;
+    document.body.removeChild(test);
+    if (computed !== '1px') document.documentElement.classList.add('no-layout-gap');
+  })();
+  (function() {
+    var supports = CSS.supports('width', 'min(1px,2px)');
+    if (!supports) document.documentElement.classList.add('no-css-functions');
+  })();
+  (function() {
+    var supports = CSS.supports('aspect-ratio', '1/1');
+    if (!supports) { document.documentElement.classList.add('no-aspect-ratio'); return; }
+    var test = document.createElement('div');
+    test.style.aspectRatio = '1/1';
+    test.style.width = '100px';
+    document.body.appendChild(test);
+    var height = test.offsetHeight;
+    document.body.removeChild(test);
+    if (height !== 100) document.documentElement.classList.add('no-aspect-ratio');
+  })();
+})();
+
+// ============================================================
+// 主脚本
+// ============================================================
+(function() {
+  'use strict';
+
+  var BASE = 'https://huavod.com';
+  var CATS = [
+    ['首页', '/'],
+    ['电影', '/vodshow/1.html'],
+    ['电视剧', '/vodshow/2.html'],
+    ['动漫', '/vodshow/4.html'],
+    ['综艺', '/vodshow/3.html'],
+    ['短剧', '/vodshow/5.html'],
+    ['纪录片', '/vodshow/42.html']
+  ];
+  var UA = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36';
+
+  var content = document.getElementById('content');
+  var statusEl = document.getElementById('status');
+  var tabsEl = document.getElementById('tabs');
+  var searchForm = document.getElementById('searchForm');
+  var kwInput = document.getElementById('kw');
+  var detailSheet = document.getElementById('detailSheet');
+  var detailPanel = document.getElementById('detailPanel');
+
+  var currentUrl = BASE + '/';
+  var lastFocus = null;
+  var detailData = null;
+
+  // ===== 工具函数 =====
+  function abs(url) {
+    try { return new URL(url, BASE + '/').href; } catch(e) { return url || ''; }
+  }
+  function esc(s) {
+    return String(s || '').replace(/[&<>'"]/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c] || c;
+    });
+  }
+  function clean(s) {
+    return String(s || '').replace(/\s+/g, ' ').trim();
+  }
+  function imgUrl(u) {
+    u = abs(u || '');
+    if (!u) return '';
+    if (window.fm && fm.res) {
+      try { return fm.res(u, { headers: { Referer: BASE + '/', 'User-Agent': UA } }); } catch(e) {}
+    }
+    return u;
+  }
+  function setStatus(msg) {
+    statusEl.textContent = msg || '';
+  }
+
+  function whenFm() {
+    if (window.fm) return Promise.resolve(window.fm);
+    return new Promise(function(resolve) {
+      window.addEventListener('fmsdk', function() { resolve(window.fm); }, { once: true });
+      setTimeout(function() { resolve(window.fm || null); }, 1500);
+    });
+  }
+
+  function reqText(url) {
+    url = abs(url);
+    setStatus('加载：' + url);
+    var headers = {
+      'User-Agent': UA,
+      'Referer': BASE + '/',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'zh-CN,zh;q=0.9'
+    };
+    return new Promise(function(resolve, reject) {
+      if (window.fm && fm.req) {
+        fm.req(url, { method: 'GET', headers: headers, responseType: 'text', timeout: 25, credentials: 'include' })
+          .then(function(r) {
+            if (!r.ok) throw new Error(r.error || ('HTTP ' + r.status));
+            return r.body || '';
+          })
+          .then(resolve)
+          .catch(reject);
+      } else {
+        fetch(url, { headers: headers, cache: 'no-store' })
+          .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(resolve)
+          .catch(reject);
+      }
+    });
+  }
+
+  function doc(html) {
+    return new DOMParser().parseFromString(html, 'text/html');
+  }
+
+  // ===== 卡片提取（兼容首页/分类/搜索） =====
+  function cardFromBox(box) {
+    var href = '';
+    var title = '';
+    var image = '';
+    var remark = '';
+
+    // 1. 尝试搜索页结构
+    var thumbTxt = box.querySelector('.thumb-txt a');
+    if (thumbTxt) {
+      href = abs(thumbTxt.getAttribute('href') || '');
+      title = clean(thumbTxt.textContent);
+    }
+    // 2. 尝试普通列表结构
+    if (!href) {
+      var link = box.querySelector('a.public-list-exp');
+      if (link) href = abs(link.getAttribute('href') || '');
+      var titleEl = box.querySelector('.time-title');
+      if (titleEl) title = clean(titleEl.textContent);
+    }
+    // 3. 图片
+    var img = box.querySelector('img.lazy');
+    if (img) {
+      image = img.getAttribute('data-src') || img.getAttribute('src') || '';
+    }
+    // 4. 备注
+    var remarkEl = box.querySelector('.public-list-prb') || box.querySelector('.public-list-subtitle') || box.querySelector('.thumb-else');
+    if (remarkEl) remark = clean(remarkEl.textContent);
+
+    if (!title && href) {
+      // 从 href 中提取最后一段作为标题
+      var parts = href.split('/');
+      var last = parts[parts.length-1];
+      title = last.replace(/\.html$/, '').replace(/-/g, ' ');
+    }
+    return { title: title, remark: remark, href: href, image: abs(image) };
+  }
+
+  function uniqueItemsArr(arr) {
+    var map = new Map();
+    arr.forEach(function(x) {
+      if (x && x.href && x.title && !map.has(x.href)) map.set(x.href, x);
+    });
+    return Array.from(map.values());
+  }
+
+  // ===== 解析列表 =====
+  function parseList(html, keyword) {
+    var d = doc(html);
+    var sections = [];
+    var badHost = function(el) {
+      return !!el.closest('.pop-list-body,.search-hot,.history,.footer,.head-more,.slide-time,.banner,.swiper,.large-swiper,.popup');
+    };
+    var isGood = function(x) {
+      return x && x.href && x.title && x.image && !/^点击观看$/.test(x.title);
+    };
+    // 找模块标题
+    var heads = d.querySelectorAll('.title-a .this-name, .title-a h2, .module-title');
+    var headList = [];
+    heads.forEach(function(h) {
+      var t = clean(h.textContent).replace('更多', '');
+      if (t && !/搜索|播放记录|搜索历史|热门搜索|更多/.test(t)) {
+        headList.push({ el: h.closest('.title-a') || h.parentElement, title: t });
+      }
+    });
+    if (!headList.length) {
+      headList.push({ el: d.body, title: keyword ? ('搜索：' + keyword) : '影片列表' });
+    }
+    headList.forEach(function(item) {
+      var container = item.el;
+      var boxes = container.querySelectorAll('.public-list-box');
+      if (!boxes.length) {
+        var parent = container.parentElement;
+        for (var i = 0; i < 3 && parent; i++) {
+          boxes = parent.querySelectorAll('.public-list-box');
+          if (boxes.length) break;
+          parent = parent.parentElement;
+        }
+      }
+      var items = [];
+      boxes.forEach(function(box) {
+        if (!badHost(box)) {
+          var card = cardFromBox(box);
+          if (card.href) items.push(card);
+        }
+      });
+      items = uniqueItemsArr(items).filter(isGood).slice(0, 60);
+      if (items.length) sections.push({ title: item.title, items: items });
+    });
+    if (!sections.length) {
+      var allBoxes = d.querySelectorAll('.public-list-box');
+      var allItems = [];
+      allBoxes.forEach(function(box) {
+        if (!badHost(box)) {
+          var card = cardFromBox(box);
+          if (card.href) allItems.push(card);
+        }
+      });
+      allItems = uniqueItemsArr(allItems).filter(isGood);
+      if (keyword) {
+        allItems = allItems.filter(function(x) {
+          return x.title.indexOf(keyword) !== -1 || x.remark.indexOf(keyword) !== -1;
+        });
+      }
+      allItems = allItems.slice(0, 60);
+      if (allItems.length) {
+        sections.push({ title: keyword ? ('搜索：' + keyword) : '影片列表', items: allItems });
+      }
+    }
+    return sections;
+  }
+
+  // ===== 解析详情（简介、线路、集数） =====
+  function parseDetail(html, url) {
+    var d = doc(html);
+    // 标题
+    var title = '';
+    var titleEl = d.querySelector('.slide-info-title') || d.querySelector('.detail-title') || d.querySelector('h1');
+    if (titleEl) title = clean(titleEl.textContent);
+    if (!title) title = d.title.replace(/^.*?《|》.*$/, '').replace(/免费.*$/, '').trim();
+
+    // 海报
+    var pic = d.querySelector('.detail-pic img, .detail-pic');
+    var image = '';
+    if (pic) {
+      image = pic.getAttribute('data-src') || pic.getAttribute('src') || '';
+      if (!image && pic.style.backgroundImage) {
+        var match = pic.style.backgroundImage.match(/url\(['"]?([^'")]+)['"]?\)/);
+        if (match) image = match[1];
+      }
+    }
+    image = abs(image);
+
+    // 简介
+    var desc = '';
+    var descNode = d.querySelector('#height_limit') || d.querySelector('.text.cor3') || d.querySelector('.vod-detail .text');
+    if (descNode) desc = clean(descNode.textContent).replace(/展开$/, '');
+    if (!desc) desc = '暂无简介';
+
+    // 线路
+    var lineTabs = d.querySelectorAll('.anthology-tab a');
+    var lines = [];
+    if (lineTabs.length) {
+      // 每个线路对应一个 .anthology-list-box
+      var lineBoxes = d.querySelectorAll('.anthology-list .anthology-list-box');
+      lineTabs.forEach(function(tab, idx) {
+        var lineName = clean(tab.textContent);
+        var eps = [];
+        var box = lineBoxes[idx];
+        if (box) {
+          var epLinks = box.querySelectorAll('ul.anthology-list-play li a');
+          epLinks.forEach(function(a) {
+            var epTitle = clean(a.textContent) || '播放';
+            var epHref = abs(a.getAttribute('href') || '');
+            if (epHref) eps.push({ title: epTitle, href: epHref });
+          });
+        }
+        if (eps.length) {
+          lines.push({ sid: String(idx+1), name: lineName, eps: eps });
+        }
+      });
+    }
+    // 如果没有线路，尝试直接找集数（默认线路）
+    if (!lines.length) {
+      var defaultEps = [];
+      var allLinks = d.querySelectorAll('.anthology-list-play li a');
+      allLinks.forEach(function(a) {
+        var epTitle = clean(a.textContent) || '播放';
+        var epHref = abs(a.getAttribute('href') || '');
+        if (epHref) defaultEps.push({ title: epTitle, href: epHref });
+      });
+      if (defaultEps.length) {
+        lines.push({ sid: '1', name: '默认线路', eps: defaultEps });
+      }
     }
 
-  } catch(e) {
-    status.textContent = '解析失败: ' + e.message;
-    console.error('[华视] 播放解析异常:', e);
+    // 字段（导演、演员等）
+    var fields = [];
+    var infoEl = d.querySelector('.detail-info .slide-info');
+    if (infoEl) {
+      var items = infoEl.querySelectorAll('strong.r6');
+      items.forEach(function(strong) {
+        var label = clean(strong.textContent).replace(/[：:]/g, '').trim();
+        var value = '';
+        var next = strong.nextSibling;
+        while (next && next.nodeType === 3) {
+          value += next.textContent;
+          next = next.nextSibling;
+        }
+        // 也可能有多个文本节点
+        var parent = strong.parentElement;
+        if (parent) {
+          var text = parent.textContent.replace(strong.textContent, '').trim();
+          value = text.replace(/^[：:]\s*/, '').trim();
+        }
+        if (value) fields.push([label, value]);
+      });
+    }
+
+    return {
+      title: title,
+      image: image,
+      desc: desc,
+      lines: lines,
+      fields: fields,
+      url: url
+    };
   }
-}
 
-// ============ 初始化 ============
-function init(){
-  renderTabs(CATS[0][1]);
-  $('#searchForm').onsubmit = function(e){ e.preventDefault(); search($('#kw').value); };
-  watchOuterAds();
-  loadCategory(CATS[0][1], 1);
-}
+  // ===== 渲染函数 =====
+  function renderTabs(active) {
+    tabsEl.innerHTML = '';
+    CATS.forEach(function(cat) {
+      var btn = document.createElement('button');
+      btn.className = 'tab' + (abs(cat[1]) === abs(active) ? ' active' : '');
+      btn.textContent = cat[0];
+      btn.dataset.url = abs(cat[1]);
+      btn.onclick = function() { loadPage(btn.dataset.url); };
+      tabsEl.appendChild(btn);
+    });
+  }
 
-waitFm().then(function(){
-  console.log('[华视] SDK 就绪');
-  init();
-}).catch(function(){
-  console.warn('[华视] SDK 未就绪，使用普通模式');
-  init();
-});
+  function renderSections(sections) {
+    if (!sections || !sections.length) {
+      content.innerHTML = '<div class="empty">暂无内容</div>';
+      return;
+    }
+    var html = '';
+    sections.forEach(function(sec) {
+      html += '<section class="section"><div class="section-title"><h2>' + esc(sec.title) + '</h2></div><div class="grid">';
+      sec.items.forEach(function(it) {
+        html += '<article class="card" tabindex="0" data-href="' + esc(it.href) + '">' +
+          '<div class="poster">' +
+          (it.image ? '<img loading="lazy" referrerpolicy="no-referrer" src="' + esc(imgUrl(it.image)) + '" alt="' + esc(it.title) + '">' : '<div class="noimg">📺</div>') +
+          '</div>' +
+          '<div class="meta"><div class="name">' + esc(it.title) + '</div><div class="remark">' + esc(it.remark || '点击查看详情') + '</div></div>' +
+          '</article>';
+      });
+      html += '</div></section>';
+    });
+    content.innerHTML = html;
+    content.querySelectorAll('.card').forEach(function(card) {
+      card.onclick = function() { openDetail(card.dataset.href); };
+      card.onkeydown = function(e) { if (e.key === 'Enter') card.click(); };
+    });
+    setTimeout(function() {
+      var first = document.querySelector('.card');
+      if (first) first.focus({ preventScroll: true });
+    }, 50);
+  }
+
+  // ===== 加载页面 =====
+  function loadPage(url) {
+    currentUrl = abs(url);
+    renderTabs(currentUrl);
+    content.innerHTML = '<div class="empty loading">加载中…</div>';
+    reqText(currentUrl)
+      .then(function(html) {
+        var sections = parseList(html);
+        renderSections(sections);
+        var total = sections.reduce(function(sum, s) { return sum + s.items.length; }, 0);
+        setStatus('已加载 ' + total + ' 条内容');
+      })
+      .catch(function(err) {
+        content.innerHTML = '<div class="empty">加载失败：' + esc(err.message) + '</div>';
+        setStatus('错误');
+      });
+  }
+
+  // ===== 搜索 =====
+  function search(q) {
+    q = clean(q);
+    if (!q) {
+      // 无关键词时跳转到搜索页（显示热门）
+      location.href = BASE + '/vodsearch.html';
+      return;
+    }
+    renderTabs('');
+    content.innerHTML = '<div class="empty loading">搜索中…</div>';
+    var searchUrl = BASE + '/vodsearch.html?wd=' + encodeURIComponent(q);
+    reqText(searchUrl)
+      .then(function(html) {
+        var sections = parseList(html, q);
+        if (!sections.length || !sections[0].items.length) {
+          content.innerHTML = '<div class="empty">未找到相关结果</div>';
+          setStatus('无结果：' + q);
+          return;
+        }
+        sections[0].title = '搜索：' + q;
+        renderSections(sections);
+        setStatus('搜索完成：' + q);
+      })
+      .catch(function(err) {
+        content.innerHTML = '<div class="empty">搜索失败，请重试</div>';
+        setStatus('搜索失败');
+      });
+  }
+
+  // ===== 打开详情浮层 =====
+  function openDetail(url) {
+    lastFocus = document.activeElement;
+    document.body.classList.add('detail-active');
+    detailSheet.classList.add('active');
+    detailPanel.innerHTML = '<div class="empty loading">正在读取详情…</div>';
+    history.pushState({ route: 'detail', url: url }, '', '#detail=' + encodeURIComponent(url));
+
+    reqText(url)
+      .then(function(html) {
+        var data = parseDetail(html, url);
+        detailData = data;
+
+        var fieldsHtml = '';
+        data.fields.forEach(function(f) {
+          fieldsHtml += '<div><b>' + esc(f[0]) + '：</b>' + esc(f[1]) + '</div>';
+        });
+
+        var linesHtml = '';
+        if (data.lines.length) {
+          data.lines.forEach(function(ln, idx) {
+            linesHtml += '<button class="line-tab' + (idx === 0 ? ' active' : '') + '" data-sid="' + esc(ln.sid) + '">' + esc(ln.name) + '(' + ln.eps.length + ')</button>';
+          });
+        } else {
+          linesHtml = '<span class="line-tab active">无线路</span>';
+        }
+
+        var firstLine = data.lines[0] || { eps: [] };
+        var epsHtml = '';
+        if (firstLine.eps.length) {
+          firstLine.eps.forEach(function(ep) {
+            epsHtml += '<button class="ep" data-href="' + esc(ep.href) + '">' + esc(ep.title) + '</button>';
+          });
+        } else {
+          epsHtml = '<div class="empty">暂无分集</div>';
+        }
+
+        detailPanel.innerHTML = 
+          '<button id="closeDetail">返回</button>' +
+          '<div class="detail-head">' +
+          (data.image ? '<img class="detail-pic" referrerpolicy="no-referrer" src="' + esc(imgUrl(data.image)) + '" onerror="this.style.display=\'none\'">' : '') +
+          '<div class="detail-side">' +
+          '<div class="detail-title">' + esc(data.title) + '</div>' +
+          '<div class="detail-info">' + fieldsHtml + '</div>' +
+          '</div></div>' +
+          '<div class="intro-pill">📖 简介</div>' +
+          '<p class="desc">' + esc(data.desc) + '</p>' +
+          '<div class="play-title">🎬 播放线路</div>' +
+          '<div class="line-tabs">' + linesHtml + '</div>' +
+          '<div class="episodes" id="episodeBox">' + epsHtml + '</div>';
+
+        document.getElementById('closeDetail').onclick = closeDetail;
+
+        // 线路切换
+        detailPanel.querySelectorAll('.line-tab').forEach(function(btn) {
+          btn.onclick = function() {
+            detailPanel.querySelectorAll('.line-tab').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var sid = btn.dataset.sid;
+            var line = data.lines.find(function(l) { return l.sid === sid; });
+            if (!line) line = data.lines[0];
+            var box = document.getElementById('episodeBox');
+            if (line && line.eps.length) {
+              box.innerHTML = line.eps.map(function(ep) {
+                return '<button class="ep" data-href="' + esc(ep.href) + '">' + esc(ep.title) + '</button>';
+              }).join('');
+              box.querySelectorAll('.ep').forEach(function(b) {
+                b.onclick = function() { playEpisode(b.dataset.href, data.title + ' ' + b.textContent); };
+              });
+            } else {
+              box.innerHTML = '<div class="empty">该线路暂无分集</div>';
+            }
+          };
+        });
+
+        // 集数点击 → 跳转播放页（注入脚本接管）
+        detailPanel.querySelectorAll('.ep').forEach(function(b) {
+          b.onclick = function() { playEpisode(b.dataset.href, data.title + ' ' + b.textContent); };
+        });
+
+        document.getElementById('closeDetail').focus({ preventScroll: true });
+      })
+      .catch(function(err) {
+        detailPanel.innerHTML = '<button id="closeDetail" onclick="window.__wbClose()">返回</button><div class="empty">详情加载失败：' + esc(err.message) + '</div>';
+        document.getElementById('closeDetail').onclick = closeDetail;
+      });
+  }
+
+  // ===== 播放：跳转播放页 =====
+  function playEpisode(href, title) {
+    // 跳转播放页，由注入脚本拦截XHR并调用fm.play
+    setStatus('跳转播放页…');
+    location.href = href;
+  }
+
+  function closeDetail() {
+    document.body.classList.remove('detail-active');
+    detailSheet.classList.remove('active');
+    if (location.hash.startsWith('#detail=')) history.back();
+    if (lastFocus && lastFocus.focus) setTimeout(function() { lastFocus.focus({ preventScroll: true }); }, 50);
+  }
+  window.__wbClose = closeDetail;
+
+  // ===== 键盘事件 =====
+  function handleKeys(e) {
+    if (e.key === 'Escape' || e.key === 'Backspace') {
+      if (detailSheet.classList.contains('active')) {
+        e.preventDefault();
+        closeDetail();
+        return;
+      }
+    }
+    if (e.key === 'Enter') {
+      var active = document.activeElement;
+      if (active && active.classList && active.classList.contains('card')) {
+        active.click();
+      }
+    }
+  }
+  document.addEventListener('keydown', handleKeys, true);
+
+  // ===== 初始化 =====
+  function boot() {
+    setStatus('正在初始化…');
+    renderTabs(BASE + '/');
+    searchForm.onsubmit = function(e) {
+      e.preventDefault();
+      search(kwInput.value);
+    };
+    window.addEventListener('popstate', function() {
+      if (detailSheet.classList.contains('active')) {
+        closeDetail();
+      } else {
+        loadPage(currentUrl);
+      }
+    });
+    loadPage(BASE + '/');
+  }
+
+  whenFm().then(function() {
+    boot();
+  }).catch(function() {
+    boot();
+  });
 
 })();
 </script>
