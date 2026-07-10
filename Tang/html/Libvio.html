@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>LIBVIO WebHome</title>
+<style>
+  /* ===== 样式：沿用厂长/华视的深色透明风格 ===== */
+  :root{--panel-rgb:42,50,58;--panel:rgba(var(--panel-rgb),0.62);--panel-soft:rgba(var(--panel-rgb),0.44);--panel-strong:rgba(var(--panel-rgb),0.86);--line:rgba(255,255,255,0.16);--text:#f7fbff;--muted:rgba(247,251,255,0.68);--accent:#ff6b35;--accent2:#ffb86b;--radius:16px;--shadow:0 12px 40px rgba(0,0,0,0.3)}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:transparent;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+  html:not(.fm-native) body{background:#1e242a}
+  .app{min-height:100vh;background:transparent;padding:8px 10px 30px}
+  .top{position:relative;z-index:1;padding:6px 0 8px;border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:6px}
+  .brand{flex:0 0 auto;font-size:20px;font-weight:900}.brand b{color:var(--accent2)}
+  .search{flex:1;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.14);border-radius:999px;padding:4px 5px 4px 12px}
+  .search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:15px}
+  .search input::placeholder{color:var(--muted)}
+  .btn{background:var(--panel-soft);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer}
+  .btn.primary{background:linear-gradient(135deg,rgba(255,107,53,0.85),rgba(255,184,107,0.7));border-color:rgba(255,184,107,0.6);color:#17110d;font-weight:700}
+  .tabs{display:flex;gap:6px;overflow:auto;padding:8px 2px 0;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;border-radius:999px;padding:6px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--muted);cursor:pointer}
+  .tab.active{background:linear-gradient(135deg,rgba(255,107,53,0.45),rgba(255,184,107,0.25));color:var(--text);border-color:rgba(255,184,107,0.6);font-weight:700}
+  .status{margin:8px 2px 6px;color:var(--muted);font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .card{position:relative;min-width:0;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.04));border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;transition:transform .15s}
+  .card:focus,.card:hover{transform:translateY(-2px);outline:2px solid var(--accent2);outline-offset:2px}
+  .poster{aspect-ratio:3/4;background:rgba(255,255,255,0.06);overflow:hidden;position:relative}
+  .poster img{width:100%;height:100%;object-fit:cover;display:block}
+  .poster .noimg{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:24px}
+  .meta{padding:6px 8px 8px}
+  .name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .remark{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .section{margin:14px 0}
+  .section-title{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+  .section-title h2{margin:0;font-size:16px}
+  .empty{padding:24px 16px;text-align:center;color:var(--muted);background:var(--panel-soft);border:1px dashed var(--line);border-radius:var(--radius)}
+  .loading{opacity:.7}
+
+  /* ===== 详情浮层 ===== */
+  .sheet{position:fixed;inset:0;z-index:40;display:none;background:transparent;overflow:hidden}
+  .sheet.active{display:block}
+  .sheet-inner{height:100vh;padding:12px;background:transparent;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .detail-panel{background:linear-gradient(135deg,rgba(40,30,64,0.7),rgba(24,20,42,0.6));border:1px solid rgba(255,255,255,0.10);border-radius:22px;box-shadow:var(--shadow);padding:16px 14px 22px;margin-bottom:30px}
+  .detail-head{display:grid;grid-template-columns:38% 1fr;gap:14px;align-items:start}
+  .detail-pic{width:100%;aspect-ratio:3/4;border-radius:14px;object-fit:cover;background:rgba(255,255,255,0.08);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+  .detail-title{font-size:22px;font-weight:600;margin:0 0 6px;line-height:1.2}
+  .detail-info{font-size:14px;line-height:1.6;color:var(--muted)}
+  .detail-info b{color:rgba(255,255,255,0.8);margin-right:4px}
+  .intro-pill{display:inline-block;margin:18px 0 12px;padding:8px 22px;border-radius:999px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,184,107,0.5);color:rgba(255,255,255,0.9);font-size:16px;font-weight:600}
+  .desc{color:rgba(255,255,255,0.7);font-size:16px;line-height:1.7;margin:0 2px 14px}
+  .play-title{margin:12px 2px 6px;font-size:16px;font-weight:700}
+  .line-tabs{display:flex;gap:6px;overflow-x:auto;margin:6px 0 8px;padding-bottom:2px}
+  .line-tab{border-radius:999px;padding:6px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);white-space:nowrap;color:rgba(255,255,255,0.8);cursor:pointer}
+  .line-tab.active{background:rgba(255,107,53,0.35);border-color:rgba(255,184,107,0.6);font-weight:700}
+  .episodes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+  .ep{border-radius:12px;padding:8px 4px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);cursor:pointer;text-align:center;font-size:14px}
+  .ep:focus,.ep:hover{background:rgba(255,107,53,0.25);outline:2px solid var(--accent2)}
+  #closeDetail{margin:0 0 12px;padding:8px 20px;border-radius:999px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,184,107,0.5);cursor:pointer}
+  body.detail-active .app{visibility:hidden;pointer-events:none}
+
+  /* ===== 响应式 ===== */
+  @media(min-width:720px){.grid{grid-template-columns:repeat(5,1fr)}.app{padding:16px 30px 40px}.detail-head{grid-template-columns:160px 1fr}.detail-pic{width:160px}.episodes{grid-template-columns:repeat(6,1fr)}}
+  @media(min-width:1100px){.grid{grid-template-columns:repeat(7,1fr)}.app{max-width:1380px;margin:0 auto}.sheet-inner{max-width:1180px;margin:0 auto}}
+  @media(max-width:480px){.app{padding:6px 6px 20px}.grid{grid-template-columns:repeat(3,1fr);gap:6px}.meta{padding:5px 6px 6px}.name{font-size:12px}.remark{font-size:10px}.detail-head{grid-template-columns:38% 1fr}.detail-title{font-size:20px}.episodes{grid-template-columns:repeat(4,1fr)}.ep{font-size:13px;padding:7px 2px}}
+  html.no-layout-gap .grid{gap:6px} html.no-layout-gap .episodes{gap:6px}
+  html.no-aspect-ratio .poster{height:0;padding-bottom:133.33%;position:relative}
+  html.no-aspect-ratio .poster img{position:absolute;top:0;left:0;width:100%;height:100%}
+  html.no-css-functions .detail-panel{border-radius:14px}
+
+  /* ===== 广告隐藏（借鉴注入脚本） ===== */
+  #note, .popup, .t-img-box, .a_ms, .x-box, .urgent-banner,
+  .module-adslist, .ads_w, [id*="iaujwnefhw"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    opacity: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="top">
+    <div class="bar">
+      <div class="brand">LIB<b>VIO</b></div>
+      <form class="search" id="searchForm">
+        <input id="kw" type="text" placeholder="搜索电影、剧集…" autocomplete="off" />
+        <button class="btn primary" type="submit">搜索</button>
+      </form>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+  <div class="status" id="status">准备加载…</div>
+  <main id="content"></main>
+</div>
+
+<!-- 详情浮层 -->
+<div class="sheet" id="detailSheet"><div class="sheet-inner"><div class="detail-panel" id="detailPanel"></div></div></div>
+
+<script>
+// ============================================================
+// 兼容引导层 (ES5 + polyfill)
+// ============================================================
+(function() {
+  'use strict';
+  if (window.fongmiBridge || window.fm || window.fongmi) {
+    document.documentElement.classList.add('fm-native');
+  }
+  if (!Element.prototype.replaceChildren) {
+    Element.prototype.replaceChildren = function() {
+      this.innerHTML = '';
+      for (var i = 0; i < arguments.length; i++) {
+        var node = arguments[i];
+        if (typeof node === 'string') node = document.createTextNode(node);
+        this.appendChild(node);
+      }
+    };
+  }
+  if (!Object.values) {
+    Object.values = function(obj) {
+      var arr = [];
+      for (var k in obj) if (obj.hasOwnProperty(k)) arr.push(obj[k]);
+      return arr;
+    };
+  }
+  if (!Object.entries) {
+    Object.entries = function(obj) {
+      var arr = [];
+      for (var k in obj) if (obj.hasOwnProperty(k)) arr.push([k, obj[k]]);
+      return arr;
+    };
+  }
+  if (!Array.from) {
+    Array.from = function(arrLike) { return Array.prototype.slice.call(arrLike); };
+  }
+  if (!Array.prototype.includes) {
+    Array.prototype.includes = function(val) { return this.indexOf(val) !== -1; };
+  }
+  if (!NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = function(fn) {
+      for (var i = 0; i < this.length; i++) fn(this[i], i);
+    };
+  }
+  if (!String.prototype.includes) {
+    String.prototype.includes = function(search, start) {
+      return this.indexOf(search, start) !== -1;
+    };
+  }
+  if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(search, pos) {
+      return this.substr(pos || 0, search.length) === search;
+    };
+  }
+  if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function(search, len) {
+      var end = len || this.length;
+      return this.substring(end - search.length, end) === search;
+    };
+  }
+  (function() {
+    var test = document.createElement('div');
+    test.style.display = 'flex';
+    test.style.gap = '1px';
+    document.body.appendChild(test);
+    var computed = getComputedStyle(test).gap;
+    document.body.removeChild(test);
+    if (computed !== '1px') document.documentElement.classList.add('no-layout-gap');
+  })();
+  (function() {
+    var supports = CSS.supports('width', 'min(1px,2px)');
+    if (!supports) document.documentElement.classList.add('no-css-functions');
+  })();
+  (function() {
+    var supports = CSS.supports('aspect-ratio', '1/1');
+    if (!supports) { document.documentElement.classList.add('no-aspect-ratio'); return; }
+    var test = document.createElement('div');
+    test.style.aspectRatio = '1/1';
+    test.style.width = '100px';
+    document.body.appendChild(test);
+    var height = test.offsetHeight;
+    document.body.removeChild(test);
+    if (height !== 100) document.documentElement.classList.add('no-aspect-ratio');
+  })();
+})();
+
+// ============================================================
+// 主脚本 — LIBVIO 专用（含完整播放解析）
+// ============================================================
+(function() {
+  'use strict';
+
+  var BASE = 'https://www.libvios.com';
+  var CATS = [
+    ['首页', '/'],
+    ['电影', '/type/1.html'],
+    ['剧集', '/type/2.html'],
+    ['番剧', '/type/4.html'],
+    ['日韩', '/type/15.html'],
+    ['欧美', '/type/16.html']
+  ];
+  var UA = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36';
+
+  var content = document.getElementById('content');
+  var statusEl = document.getElementById('status');
+  var tabsEl = document.getElementById('tabs');
+  var searchForm = document.getElementById('searchForm');
+  var kwInput = document.getElementById('kw');
+  var detailSheet = document.getElementById('detailSheet');
+  var detailPanel = document.getElementById('detailPanel');
+
+  var currentUrl = BASE + '/';
+  var lastFocus = null;
+  var detailData = null;
+
+  // ===== 工具函数 =====
+  function abs(url) {
+    try { return new URL(url, BASE + '/').href; } catch(e) { return url || ''; }
+  }
+  function esc(s) {
+    return String(s || '').replace(/[&<>'"]/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c] || c;
+    });
+  }
+  function clean(s) {
+    return String(s || '').replace(/\s+/g, ' ').trim();
+  }
+  function imgUrl(u) {
+    u = abs(u || '');
+    if (!u) return '';
+    if (window.fm && fm.res) {
+      try { return fm.res(u, { headers: { Referer: BASE + '/', 'User-Agent': UA } }); } catch(e) {}
+    }
+    return u;
+  }
+  function setStatus(msg) {
+    statusEl.textContent = msg || '';
+  }
+
+  function whenFm() {
+    if (window.fm) return Promise.resolve(window.fm);
+    return new Promise(function(resolve) {
+      window.addEventListener('fmsdk', function() { resolve(window.fm); }, { once: true });
+      setTimeout(function() { resolve(window.fm || null); }, 1500);
+    });
+  }
+
+  function reqText(url) {
+    url = abs(url);
+    setStatus('加载：' + url);
+    var headers = {
+      'User-Agent': UA,
+      'Referer': BASE + '/',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'zh-CN,zh;q=0.9'
+    };
+    return new Promise(function(resolve, reject) {
+      if (window.fm && fm.req) {
+        fm.req(url, { method: 'GET', headers: headers, responseType: 'text', timeout: 25, credentials: 'include' })
+          .then(function(r) {
+            if (!r.ok) throw new Error(r.error || ('HTTP ' + r.status));
+            return r.body || '';
+          })
+          .then(resolve)
+          .catch(reject);
+      } else {
+        fetch(url, { headers: headers, cache: 'no-store' })
+          .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(resolve)
+          .catch(reject);
+      }
+    });
+  }
+
+  function doc(html) {
+    return new DOMParser().parseFromString(html, 'text/html');
+  }
+
+  // ===== 卡片提取（适配 LIBVIO） =====
+  function cardFromBox(box) {
+    var href = '';
+    var link = box.querySelector('a.stui-vodlist__thumb');
+    if (link) href = abs(link.getAttribute('href') || '');
+    var img = box.querySelector('img.lazyload');
+    var image = '';
+    if (img) {
+      image = img.getAttribute('data-original') || img.getAttribute('src') || '';
+    }
+    var titleEl = box.querySelector('.stui-vodlist__detail .title a') || box.querySelector('.title a');
+    var title = titleEl ? clean(titleEl.textContent) : '';
+    var remarkEl = box.querySelector('.pic-text') || box.querySelector('.pic-tag-top');
+    var remark = remarkEl ? clean(remarkEl.textContent) : '';
+    return { title: title, remark: remark, href: href, image: abs(image) };
+  }
+
+  function uniqueItemsArr(arr) {
+    var map = new Map();
+    arr.forEach(function(x) {
+      if (x && x.href && x.title && !map.has(x.href)) map.set(x.href, x);
+    });
+    return Array.from(map.values());
+  }
+
+  // ===== 解析列表（首页/分类/搜索） =====
+  function parseList(html, keyword) {
+    var d = doc(html);
+    var sections = [];
+    var badHost = function(el) {
+      return !!el.closest('.ad, .footer, .popup, .slide, .banner, .t-img-box, #note');
+    };
+    var isGood = function(x) {
+      return x && x.href && x.title && x.image && !/^点击观看$/.test(x.title);
+    };
+
+    // 找模块标题
+    var heads = d.querySelectorAll('.stui-vodlist__head h3 a, .stui-vodlist__head h3');
+    var headList = [];
+    heads.forEach(function(h) {
+      var t = clean(h.textContent).replace('更多', '');
+      if (t && !/搜索|播放记录|广告/.test(t)) {
+        headList.push({ el: h.closest('.stui-vodlist__head') || h.parentElement, title: t });
+      }
+    });
+    if (!headList.length) {
+      headList.push({ el: d.body, title: keyword ? ('搜索：' + keyword) : '影片列表' });
+    }
+
+    headList.forEach(function(item) {
+      var container = item.el;
+      // 找卡片容器：可能是 .stui-vodlist 或紧随其后的 ul
+      var listContainer = container.nextElementSibling;
+      if (!listContainer || !listContainer.classList.contains('stui-vodlist')) {
+        listContainer = container.parentElement.querySelector('.stui-vodlist');
+      }
+      if (!listContainer) {
+        listContainer = container.querySelector('.stui-vodlist');
+      }
+      var items = [];
+      if (listContainer) {
+        var boxes = listContainer.querySelectorAll('li .stui-vodlist__box');
+        boxes.forEach(function(box) {
+          if (!badHost(box)) {
+            var card = cardFromBox(box);
+            if (card.href) items.push(card);
+          }
+        });
+      }
+      items = uniqueItemsArr(items).filter(isGood).slice(0, 60);
+      if (items.length) sections.push({ title: item.title, items: items });
+    });
+
+    // 兜底
+    if (!sections.length) {
+      var allBoxes = d.querySelectorAll('.stui-vodlist__box');
+      var allItems = [];
+      allBoxes.forEach(function(box) {
+        if (!badHost(box)) {
+          var card = cardFromBox(box);
+          if (card.href) allItems.push(card);
+        }
+      });
+      allItems = uniqueItemsArr(allItems).filter(isGood);
+      if (keyword) {
+        allItems = allItems.filter(function(x) {
+          return x.title.indexOf(keyword) !== -1 || x.remark.indexOf(keyword) !== -1;
+        });
+      }
+      allItems = allItems.slice(0, 60);
+      if (allItems.length) {
+        sections.push({ title: keyword ? ('搜索：' + keyword) : '影片列表', items: allItems });
+      }
+    }
+    return sections;
+  }
+
+  // ===== 解析详情（LIBVIO 专用） =====
+  function parseDetail(html, url) {
+    var d = doc(html);
+
+    var title = '';
+    var titleEl = d.querySelector('h1.title');
+    if (titleEl) title = clean(titleEl.textContent);
+    if (!title) title = d.title.replace(/ - LIBVIO$/, '').trim();
+
+    var image = '';
+    var imgEl = d.querySelector('#js-poster-img');
+    if (imgEl) {
+      image = imgEl.getAttribute('data-original') || imgEl.getAttribute('src') || '';
+    }
+    if (!image) {
+      var posterWrap = d.querySelector('.vod-poster__wrap img');
+      if (posterWrap) image = posterWrap.getAttribute('data-original') || posterWrap.getAttribute('src') || '';
+    }
+    image = abs(image);
+
+    // 简介
+    var desc = '';
+    var descEl = d.querySelector('.detail-sketch') || d.querySelector('.detail-content');
+    if (descEl) desc = clean(descEl.textContent);
+    if (!desc) desc = '暂无简介';
+    if (desc.length > 500) desc = desc.slice(0, 500) + '…';
+
+    // 字段信息
+    var fields = [];
+    var metaItems = d.querySelectorAll('.vod-meta .meta-item');
+    metaItems.forEach(function(item) {
+      var text = clean(item.textContent);
+      // 过滤掉纯数字或过于简短的项
+      if (text && text.length > 1 && !/^\d+$/.test(text)) {
+        var parts = text.split(' ');
+        var label = '';
+        var value = text;
+        // 尝试提取标签（如"主演："，但 LIBVIO 通常没有冒号，直接是文本）
+        // 我们按常见字段归类
+        if (text.includes('主演') || text.includes('导演')) {
+          fields.push([text.split('：')[0] || text, text.split('：')[1] || '']);
+        } else {
+          // 简单处理：直接存入
+          fields.push([text, '']);
+        }
+      }
+    });
+    // 从 meta 中提取更多
+    var allMetas = d.querySelectorAll('.vod-meta');
+    allMetas.forEach(function(meta) {
+      var items = meta.querySelectorAll('.meta-item');
+      items.forEach(function(item) {
+        var txt = clean(item.textContent);
+        if (txt && !/^\d+$/.test(txt) && txt.length > 2) {
+          var existing = fields.some(function(f) { return f[0] === txt; });
+          if (!existing) {
+            fields.push([txt, '']);
+          }
+        }
+      });
+    });
+
+    // 集数列表 (多条线路)
+    var lines = [];
+    var playlistPanels = d.querySelectorAll('.playlist-panel');
+    playlistPanels.forEach(function(panel) {
+      var head = panel.querySelector('.panel-head h3');
+      var lineName = head ? clean(head.textContent) : '默认线路';
+      var epLinks = panel.querySelectorAll('ul.stui-content__playlist li a');
+      var eps = [];
+      epLinks.forEach(function(a) {
+        var epTitle = clean(a.textContent) || '播放';
+        var epHref = abs(a.getAttribute('href') || '');
+        if (epHref) eps.push({ title: epTitle, href: epHref });
+      });
+      if (eps.length) {
+        lines.push({ sid: 'line-' + lines.length, name: lineName, eps: eps });
+      }
+    });
+
+    // 如果没有 playlist-panel，尝试直接找集数
+    if (!lines.length) {
+      var allEpLinks = d.querySelectorAll('ul.stui-content__playlist li a');
+      var eps = [];
+      allEpLinks.forEach(function(a) {
+        var epTitle = clean(a.textContent) || '播放';
+        var epHref = abs(a.getAttribute('href') || '');
+        if (epHref) eps.push({ title: epTitle, href: epHref });
+      });
+      if (eps.length) {
+        lines.push({ sid: 'default', name: '默认线路', eps: eps });
+      }
+    }
+
+    return {
+      title: title,
+      image: image,
+      desc: desc,
+      fields: fields,
+      lines: lines,
+      eps: lines.length ? lines[0].eps : [],
+      url: url
+    };
+  }
+
+  // ===== 播放解析（核心：移植注入脚本逻辑） =====
+  function isValidVideoUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    return /^https?:\/\/[^\s"'<>]+\.(?:mp4|m3u8|mov|flv)/i.test(url) || url.includes('cloudcube');
+  }
+
+  function cleanVideoUrl(url) {
+    if (!url || typeof url !== 'string') return url;
+    return url.replace(/\\\//g, '/');
+  }
+
+  function tryDecodeBase64(str) {
+    try {
+      if (!/^[A-Za-z0-9+/=]+$/.test(str)) return null;
+      var decoded = atob(str);
+      if (isValidVideoUrl(decoded)) return decoded;
+      return null;
+    } catch(e) { return null; }
+  }
+
+  // 核心：从 HTML 中提取视频 URL
+  function extractVideoUrlFromHtml(html) {
+    // 1. player_aaaa
+    var playerMatch = html.match(/var\s+player_aaaa\s*=\s*\{[^}]*"url"\s*:\s*"([^"]+)"/i);
+    if (playerMatch) {
+      var cleaned = cleanVideoUrl(playerMatch[1]);
+      if (isValidVideoUrl(cleaned)) return cleaned;
+      var base64Decoded = tryDecodeBase64(cleaned);
+      if (base64Decoded && isValidVideoUrl(base64Decoded)) return base64Decoded;
+    }
+    // 2. 直接匹配 mp4/m3u8
+    var anyMatch = html.match(/(https?:\/\/[^"'\s]+\.(?:mp4|m3u8)[^"'\s]*)/i);
+    if (anyMatch) {
+      var cleaned = cleanVideoUrl(anyMatch[1]);
+      if (isValidVideoUrl(cleaned)) return cleaned;
+    }
+    return null;
+  }
+
+  // ===== 播放解析（静态直连 + 同域穿透 + push降级） =====
+function isValidVideoUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    return /^https?:\/\/[^\s"'<>]+\.(?:mp4|m3u8|mov|flv)/i.test(url) || url.includes('cloudcube');
+}
+
+function cleanVideoUrl(url) {
+    if (!url || typeof url !== 'string') return url;
+    return url.replace(/\\\//g, '/');
+}
+
+function tryDecodeBase64(str) {
+    try {
+        if (!/^[A-Za-z0-9+/=]+$/.test(str)) return null;
+        var decoded = atob(str);
+        if (isValidVideoUrl(decoded)) return decoded;
+        return null;
+    } catch(e) { return null; }
+}
+
+function extractVideoUrlFromHtml(html) {
+    // 1. player_aaaa
+    var playerMatch = html.match(/var\s+player_aaaa\s*=\s*\{[^}]*"url"\s*:\s*"([^"]+)"/i);
+    if (playerMatch) {
+        var cleaned = cleanVideoUrl(playerMatch[1]);
+        if (isValidVideoUrl(cleaned)) return cleaned;
+        var base64Decoded = tryDecodeBase64(cleaned);
+        if (base64Decoded && isValidVideoUrl(base64Decoded)) return base64Decoded;
+    }
+    // 2. 直接匹配 mp4/m3u8
+    var anyMatch = html.match(/(https?:\/\/[^"'\s]+\.(?:mp4|m3u8)[^"'\s]*)/i);
+    if (anyMatch) {
+        var cleaned = cleanVideoUrl(anyMatch[1]);
+        if (isValidVideoUrl(cleaned)) return cleaned;
+    }
+    return null;
+}
+
+function playEpisode(href, title) {
+    setStatus('正在解析播放地址…');
+    var playUrl = abs(href);
+
+    reqText(playUrl)
+        .then(function(html) {
+            var videoUrl = extractVideoUrlFromHtml(html);
+            if (videoUrl) {
+                setStatus('播放中：' + title);
+                fm.play(videoUrl, title || 'LIBVIO 影片', {
+                    headers: { Referer: BASE + '/', 'User-Agent': UA },
+                    credentials: 'include'
+                }).catch(function() {
+                    // 直连失败，跳转播放页
+                    location.href = playUrl;
+                });
+                return;
+            }
+
+            // 尝试 iframe 解析
+            var iframeMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+            if (iframeMatch) {
+                var iframeSrc = iframeMatch[1];
+                if (iframeSrc.startsWith('/')) {
+                    var baseUrl = new URL(playUrl);
+                    iframeSrc = baseUrl.origin + iframeSrc;
+                }
+                setStatus('正在解析加密视频地址…');
+                reqText(iframeSrc)
+                    .then(function(iframeHtml) {
+                        var iframeUrl = extractVideoUrlFromHtml(iframeHtml);
+                        if (iframeUrl) {
+                            setStatus('播放中：' + title);
+                            fm.play(iframeUrl, title || 'LIBVIO 影片', {
+                                headers: { Referer: BASE + '/', 'User-Agent': UA },
+                                credentials: 'include'
+                            }).catch(function() {
+                                location.href = playUrl;
+                            });
+                            return;
+                        }
+                        // iframe 解析失败，跳转播放页
+                        location.href = playUrl;
+                    })
+                    .catch(function() {
+                        location.href = playUrl;
+                    });
+                return;
+            }
+
+            // 没有 iframe，跳转播放页
+            location.href = playUrl;
+        })
+        .catch(function(err) {
+            console.error('请求播放页失败:', err);
+            location.href = playUrl;
+        });
+}
+
+  // ===== 广告清理 =====
+  function removeAds() {
+    try {
+      var selectors = [
+        '#note', '.popup', '.t-img-box', '.a_ms', '.x-box', '.urgent-banner',
+        '.module-adslist', '.ads_w', '[id*="iaujwnefhw"]', '.foot-permalink'
+      ];
+      selectors.forEach(function(sel) {
+        var els = document.querySelectorAll(sel);
+        els.forEach(function(el) {
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('height', '0', 'important');
+          el.style.setProperty('margin', '0', 'important');
+          el.style.setProperty('padding', '0', 'important');
+          el.style.setProperty('opacity', '0', 'important');
+          el.style.setProperty('pointer-events', 'none', 'important');
+          if (typeof el.remove === 'function') el.remove();
+        });
+      });
+      // 移除图片广告
+      document.querySelectorAll('img').forEach(function(img) {
+        var src = img.src || img.getAttribute('data-original') || '';
+        if (src.includes('1050X200.gif') || src.includes('meituan.net')) {
+          var parent = img.closest('.t-img-box, .ad, #note, .popup');
+          if (parent) {
+            parent.style.display = 'none';
+          }
+        }
+      });
+    } catch(e) {}
+  }
+
+  function watchAds() {
+    var observer = new MutationObserver(function() {
+      removeAds();
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  // ===== 渲染函数 =====
+  function renderTabs(active) {
+    tabsEl.innerHTML = '';
+    CATS.forEach(function(cat) {
+      var btn = document.createElement('button');
+      btn.className = 'tab' + (abs(cat[1]) === abs(active) ? ' active' : '');
+      btn.textContent = cat[0];
+      btn.dataset.url = abs(cat[1]);
+      btn.onclick = function() { loadPage(btn.dataset.url); };
+      tabsEl.appendChild(btn);
+    });
+  }
+
+  function renderSections(sections) {
+    if (!sections || !sections.length) {
+      content.innerHTML = '<div class="empty">暂无内容</div>';
+      return;
+    }
+    var html = '';
+    sections.forEach(function(sec) {
+      html += '<section class="section"><div class="section-title"><h2>' + esc(sec.title) + '</h2></div><div class="grid">';
+      sec.items.forEach(function(it) {
+        html += '<article class="card" tabindex="0" data-href="' + esc(it.href) + '">' +
+          '<div class="poster">' +
+          (it.image ? '<img loading="lazy" referrerpolicy="no-referrer" src="' + esc(imgUrl(it.image)) + '" alt="' + esc(it.title) + '">' : '<div class="noimg">📺</div>') +
+          '</div>' +
+          '<div class="meta"><div class="name">' + esc(it.title) + '</div><div class="remark">' + esc(it.remark || '点击查看详情') + '</div></div>' +
+          '</article>';
+      });
+      html += '</div></section>';
+    });
+    content.innerHTML = html;
+    content.querySelectorAll('.card').forEach(function(card) {
+      card.onclick = function() { openDetail(card.dataset.href); };
+      card.onkeydown = function(e) { if (e.key === 'Enter') card.click(); };
+    });
+    setTimeout(function() {
+      var first = document.querySelector('.card');
+      if (first) first.focus({ preventScroll: true });
+    }, 50);
+  }
+
+  // ===== 加载页面 =====
+  function loadPage(url) {
+    currentUrl = abs(url);
+    renderTabs(currentUrl);
+    content.innerHTML = '<div class="empty loading">加载中…</div>';
+    reqText(currentUrl)
+      .then(function(html) {
+        var sections = parseList(html);
+        renderSections(sections);
+        var total = sections.reduce(function(sum, s) { return sum + s.items.length; }, 0);
+        setStatus('已加载 ' + total + ' 条内容');
+        // 移除广告
+        setTimeout(removeAds, 300);
+      })
+      .catch(function(err) {
+        content.innerHTML = '<div class="empty">加载失败：' + esc(err.message) + '</div>';
+        setStatus('错误');
+      });
+  }
+
+  // ===== 搜索 =====
+  function search(q) {
+    q = clean(q);
+    if (!q) {
+      location.href = BASE + '/search/-------------.html';
+      return;
+    }
+    renderTabs('');
+    content.innerHTML = '<div class="empty loading">搜索中…</div>';
+    var searchUrl = BASE + '/search/-------------.html?wd=' + encodeURIComponent(q);
+    reqText(searchUrl)
+      .then(function(html) {
+        var sections = parseList(html, q);
+        if (!sections.length || !sections[0].items.length) {
+          content.innerHTML = '<div class="empty">未找到相关结果</div>';
+          setStatus('无结果：' + q);
+          return;
+        }
+        sections[0].title = '搜索：' + q;
+        renderSections(sections);
+        setStatus('搜索完成：' + q);
+        setTimeout(removeAds, 300);
+      })
+      .catch(function(err) {
+        content.innerHTML = '<div class="empty">搜索失败，请重试</div>';
+        setStatus('搜索失败');
+      });
+  }
+
+  // ===== 打开详情浮层 =====
+  function openDetail(url) {
+    lastFocus = document.activeElement;
+    document.body.classList.add('detail-active');
+    detailSheet.classList.add('active');
+    detailPanel.innerHTML = '<div class="empty loading">正在读取详情…</div>';
+    history.pushState({ route: 'detail', url: url }, '', '#detail=' + encodeURIComponent(url));
+
+    reqText(url)
+      .then(function(html) {
+        var data = parseDetail(html, url);
+        detailData = data;
+
+        var fieldsHtml = '';
+        data.fields.forEach(function(f) {
+          var label = f[0];
+          var value = f[1] || '';
+          if (label && !value) {
+            fieldsHtml += '<div>' + esc(label) + '</div>';
+          } else if (label && value) {
+            fieldsHtml += '<div><b>' + esc(label) + '：</b>' + esc(value) + '</div>';
+          }
+        });
+
+        var linesHtml = '';
+        if (data.lines.length) {
+          data.lines.forEach(function(ln, idx) {
+            linesHtml += '<button class="line-tab' + (idx === 0 ? ' active' : '') + '" data-sid="' + esc(ln.sid) + '">' + esc(ln.name) + '(' + ln.eps.length + ')</button>';
+          });
+        } else {
+          linesHtml = '<span class="line-tab active">无线路</span>';
+        }
+
+        var firstLine = data.lines[0] || { eps: [] };
+        var epsHtml = '';
+        if (firstLine.eps.length) {
+          firstLine.eps.forEach(function(ep) {
+            epsHtml += '<button class="ep" data-href="' + esc(ep.href) + '">' + esc(ep.title) + '</button>';
+          });
+        } else {
+          epsHtml = '<div class="empty">暂无分集</div>';
+        }
+
+        detailPanel.innerHTML = 
+          '<button id="closeDetail">返回</button>' +
+          '<div class="detail-head">' +
+          (data.image ? '<img class="detail-pic" referrerpolicy="no-referrer" src="' + esc(imgUrl(data.image)) + '" onerror="this.style.display=\'none\'">' : '') +
+          '<div class="detail-side">' +
+          '<div class="detail-title">' + esc(data.title) + '</div>' +
+          '<div class="detail-info">' + fieldsHtml + '</div>' +
+          '</div></div>' +
+          '<div class="intro-pill">📖 简介</div>' +
+          '<p class="desc">' + esc(data.desc) + '</p>' +
+          '<div class="play-title">🎬 播放线路</div>' +
+          '<div class="line-tabs">' + linesHtml + '</div>' +
+          '<div class="episodes" id="episodeBox">' + epsHtml + '</div>';
+
+        document.getElementById('closeDetail').onclick = closeDetail;
+
+        // 线路切换
+        detailPanel.querySelectorAll('.line-tab').forEach(function(btn) {
+          btn.onclick = function() {
+            detailPanel.querySelectorAll('.line-tab').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var sid = btn.dataset.sid;
+            var line = data.lines.find(function(l) { return l.sid === sid; });
+            if (!line) line = data.lines[0];
+            var box = document.getElementById('episodeBox');
+            if (line && line.eps.length) {
+              box.innerHTML = line.eps.map(function(ep) {
+                return '<button class="ep" data-href="' + esc(ep.href) + '">' + esc(ep.title) + '</button>';
+              }).join('');
+              box.querySelectorAll('.ep').forEach(function(b) {
+                b.onclick = function() { playEpisode(b.dataset.href, data.title + ' ' + b.textContent); };
+              });
+            } else {
+              box.innerHTML = '<div class="empty">该线路暂无分集</div>';
+            }
+          };
+        });
+
+        // 集数点击
+        detailPanel.querySelectorAll('.ep').forEach(function(b) {
+          b.onclick = function() { playEpisode(b.dataset.href, data.title + ' ' + b.textContent); };
+        });
+
+        document.getElementById('closeDetail').focus({ preventScroll: true });
+        setTimeout(removeAds, 200);
+      })
+      .catch(function(err) {
+        detailPanel.innerHTML = '<button id="closeDetail" onclick="window.__wbClose()">返回</button><div class="empty">详情加载失败：' + esc(err.message) + '</div>';
+        document.getElementById('closeDetail').onclick = closeDetail;
+      });
+  }
+
+  function closeDetail() {
+    document.body.classList.remove('detail-active');
+    detailSheet.classList.remove('active');
+    if (location.hash.startsWith('#detail=')) history.back();
+    if (lastFocus && lastFocus.focus) setTimeout(function() { lastFocus.focus({ preventScroll: true }); }, 50);
+  }
+  window.__wbClose = closeDetail;
+
+  // ===== 键盘事件 =====
+  function handleKeys(e) {
+    if (e.key === 'Escape' || e.key === 'Backspace') {
+      if (detailSheet.classList.contains('active')) {
+        e.preventDefault();
+        closeDetail();
+        return;
+      }
+    }
+    if (e.key === 'Enter') {
+      var active = document.activeElement;
+      if (active && active.classList && active.classList.contains('card')) {
+        active.click();
+      }
+    }
+  }
+  document.addEventListener('keydown', handleKeys, true);
+
+  // ===== 初始化 =====
+  function boot() {
+    setStatus('正在初始化…');
+    renderTabs(BASE + '/');
+    searchForm.onsubmit = function(e) {
+      e.preventDefault();
+      search(kwInput.value);
+    };
+    window.addEventListener('popstate', function() {
+      if (detailSheet.classList.contains('active')) {
+        closeDetail();
+      } else {
+        loadPage(currentUrl);
+      }
+    });
+    // 广告观察
+    watchAds();
+    setTimeout(removeAds, 100);
+    loadPage(BASE + '/');
+  }
+
+  whenFm().then(function() {
+    boot();
+  }).catch(function() {
+    boot();
+  });
+
+})();
+</script>
+</body>
+</html>

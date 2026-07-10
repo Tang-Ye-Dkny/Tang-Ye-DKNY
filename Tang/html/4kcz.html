@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>厂长资源 WebHome</title>
+<style>
+  /* ===== 样式：复用华视的样式 ===== */
+  :root{--panel-rgb:42,50,58;--panel:rgba(var(--panel-rgb),0.62);--panel-soft:rgba(var(--panel-rgb),0.44);--panel-strong:rgba(var(--panel-rgb),0.86);--line:rgba(255,255,255,0.16);--text:#f7fbff;--muted:rgba(247,251,255,0.68);--accent:#ff6b35;--accent2:#ffb86b;--radius:16px;--shadow:0 12px 40px rgba(0,0,0,0.3)}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:transparent;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+  html:not(.fm-native) body{background:#1e242a}
+  .app{min-height:100vh;background:transparent;padding:8px 10px 30px}
+  .top{position:relative;z-index:1;padding:6px 0 8px;border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:6px}
+  .brand{flex:0 0 auto;font-size:20px;font-weight:900}.brand b{color:var(--accent2)}
+  .search{flex:1;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.14);border-radius:999px;padding:4px 5px 4px 12px}
+  .search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:15px}
+  .search input::placeholder{color:var(--muted)}
+  .btn{background:var(--panel-soft);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer}
+  .btn.primary{background:linear-gradient(135deg,rgba(255,107,53,0.85),rgba(255,184,107,0.7));border-color:rgba(255,184,107,0.6);color:#17110d;font-weight:700}
+  .tabs{display:flex;gap:6px;overflow:auto;padding:8px 2px 0;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;border-radius:999px;padding:6px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--muted);cursor:pointer}
+  .tab.active{background:linear-gradient(135deg,rgba(255,107,53,0.45),rgba(255,184,107,0.25));color:var(--text);border-color:rgba(255,184,107,0.6);font-weight:700}
+  .status{margin:8px 2px 6px;color:var(--muted);font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .card{position:relative;min-width:0;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.04));border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;transition:transform .15s}
+  .card:focus,.card:hover{transform:translateY(-2px);outline:2px solid var(--accent2);outline-offset:2px}
+  .poster{aspect-ratio:3/4;background:rgba(255,255,255,0.06);overflow:hidden;position:relative}
+  .poster img{width:100%;height:100%;object-fit:cover;display:block}
+  .poster .noimg{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:24px}
+  .meta{padding:6px 8px 8px}
+  .name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .remark{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .section{margin:14px 0}
+  .section-title{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+  .section-title h2{margin:0;font-size:16px}
+  .empty{padding:24px 16px;text-align:center;color:var(--muted);background:var(--panel-soft);border:1px dashed var(--line);border-radius:var(--radius)}
+  .loading{opacity:.7}
+
+  /* ===== 详情浮层 ===== */
+  .sheet{position:fixed;inset:0;z-index:40;display:none;background:transparent;overflow:hidden}
+  .sheet.active{display:block}
+  .sheet-inner{height:100vh;padding:12px;background:transparent;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .detail-panel{background:linear-gradient(135deg,rgba(40,30,64,0.7),rgba(24,20,42,0.6));border:1px solid rgba(255,255,255,0.10);border-radius:22px;box-shadow:var(--shadow);padding:16px 14px 22px;margin-bottom:30px}
+  .detail-head{display:grid;grid-template-columns:38% 1fr;gap:14px;align-items:start}
+  .detail-pic{width:100%;aspect-ratio:3/4;border-radius:14px;object-fit:cover;background:rgba(255,255,255,0.08);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+  .detail-title{font-size:22px;font-weight:600;margin:0 0 6px;line-height:1.2}
+  .detail-info{font-size:14px;line-height:1.6;color:var(--muted)}
+  .detail-info b{color:rgba(255,255,255,0.8);margin-right:4px}
+  .intro-pill{display:inline-block;margin:18px 0 12px;padding:8px 22px;border-radius:999px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,184,107,0.5);color:rgba(255,255,255,0.9);font-size:16px;font-weight:600}
+  .desc{color:rgba(255,255,255,0.7);font-size:16px;line-height:1.7;margin:0 2px 14px}
+  .play-title{margin:12px 2px 6px;font-size:16px;font-weight:700}
+  .line-tabs{display:flex;gap:6px;overflow-x:auto;margin:6px 0 8px;padding-bottom:2px}
+  .line-tab{border-radius:999px;padding:6px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);white-space:nowrap;color:rgba(255,255,255,0.8);cursor:pointer}
+  .line-tab.active{background:rgba(255,107,53,0.35);border-color:rgba(255,184,107,0.6);font-weight:700}
+  .episodes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+  .ep{border-radius:12px;padding:8px 4px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);cursor:pointer;text-align:center;font-size:14px}
+  .ep:focus,.ep:hover{background:rgba(255,107,53,0.25);outline:2px solid var(--accent2)}
+  #closeDetail{margin:0 0 12px;padding:8px 20px;border-radius:999px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,184,107,0.5);cursor:pointer}
+  body.detail-active .app{visibility:hidden;pointer-events:none}
+
+  /* ===== 响应式 ===== */
+  @media(min-width:720px){.grid{grid-template-columns:repeat(5,1fr)}.app{padding:16px 30px 40px}.detail-head{grid-template-columns:160px 1fr}.detail-pic{width:160px}.episodes{grid-template-columns:repeat(6,1fr)}}
+  @media(min-width:1100px){.grid{grid-template-columns:repeat(7,1fr)}.app{max-width:1380px;margin:0 auto}.sheet-inner{max-width:1180px;margin:0 auto}}
+  @media(max-width:480px){.app{padding:6px 6px 20px}.grid{grid-template-columns:repeat(3,1fr);gap:6px}.meta{padding:5px 6px 6px}.name{font-size:12px}.remark{font-size:10px}.detail-head{grid-template-columns:38% 1fr}.detail-title{font-size:20px}.episodes{grid-template-columns:repeat(4,1fr)}.ep{font-size:13px;padding:7px 2px}}
+  html.no-layout-gap .grid{gap:6px} html.no-layout-gap .episodes{gap:6px}
+  html.no-aspect-ratio .poster{height:0;padding-bottom:133.33%;position:relative}
+  html.no-aspect-ratio .poster img{position:absolute;top:0;left:0;width:100%;height:100%}
+  html.no-css-functions .detail-panel{border-radius:14px}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="top">
+    <div class="bar">
+      <div class="brand">厂长<b>资源</b></div>
+      <form class="search" id="searchForm">
+        <input id="kw" type="text" placeholder="搜索电影、剧集…" autocomplete="off" />
+        <button class="btn primary" type="submit">搜索</button>
+      </form>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+  <div class="status" id="status">准备加载…</div>
+  <main id="content"></main>
+</div>
+
+<!-- 详情浮层 -->
+<div class="sheet" id="detailSheet"><div class="sheet-inner"><div class="detail-panel" id="detailPanel"></div></div></div>
+
+<script>
+// ============================================================
+// 兼容引导层 (ES5 + polyfill)
+// ============================================================
+(function() {
+  'use strict';
+  if (window.fongmiBridge || window.fm || window.fongmi) {
+    document.documentElement.classList.add('fm-native');
+  }
+  if (!Element.prototype.replaceChildren) {
+    Element.prototype.replaceChildren = function() {
+      this.innerHTML = '';
+      for (var i = 0; i < arguments.length; i++) {
+        var node = arguments[i];
+        if (typeof node === 'string') node = document.createTextNode(node);
+        this.appendChild(node);
+      }
+    };
+  }
+  if (!Object.values) {
+    Object.values = function(obj) {
+      var arr = [];
+      for (var k in obj) if (obj.hasOwnProperty(k)) arr.push(obj[k]);
+      return arr;
+    };
+  }
+  if (!Object.entries) {
+    Object.entries = function(obj) {
+      var arr = [];
+      for (var k in obj) if (obj.hasOwnProperty(k)) arr.push([k, obj[k]]);
+      return arr;
+    };
+  }
+  if (!Array.from) {
+    Array.from = function(arrLike) { return Array.prototype.slice.call(arrLike); };
+  }
+  if (!Array.prototype.includes) {
+    Array.prototype.includes = function(val) { return this.indexOf(val) !== -1; };
+  }
+  if (!NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = function(fn) {
+      for (var i = 0; i < this.length; i++) fn(this[i], i);
+    };
+  }
+  if (!String.prototype.includes) {
+    String.prototype.includes = function(search, start) {
+      return this.indexOf(search, start) !== -1;
+    };
+  }
+  if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(search, pos) {
+      return this.substr(pos || 0, search.length) === search;
+    };
+  }
+  if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function(search, len) {
+      var end = len || this.length;
+      return this.substring(end - search.length, end) === search;
+    };
+  }
+  (function() {
+    var test = document.createElement('div');
+    test.style.display = 'flex';
+    test.style.gap = '1px';
+    document.body.appendChild(test);
+    var computed = getComputedStyle(test).gap;
+    document.body.removeChild(test);
+    if (computed !== '1px') document.documentElement.classList.add('no-layout-gap');
+  })();
+  (function() {
+    var supports = CSS.supports('width', 'min(1px,2px)');
+    if (!supports) document.documentElement.classList.add('no-css-functions');
+  })();
+  (function() {
+    var supports = CSS.supports('aspect-ratio', '1/1');
+    if (!supports) { document.documentElement.classList.add('no-aspect-ratio'); return; }
+    var test = document.createElement('div');
+    test.style.aspectRatio = '1/1';
+    test.style.width = '100px';
+    document.body.appendChild(test);
+    var height = test.offsetHeight;
+    document.body.removeChild(test);
+    if (height !== 100) document.documentElement.classList.add('no-aspect-ratio');
+  })();
+})();
+
+// ============================================================
+// 主脚本 — 厂长资源专用（含详情浮层）
+// ============================================================
+(function() {
+  'use strict';
+
+  var BASE = 'https://www.4kcz.com';
+  var CATS = [
+    ['首页', '/'],
+    ['豆瓣Top250', '/dbtop250'],
+    ['最新电影', '/zuixindianying'],
+    ['剧场版', '/dongmanjuchangban'],
+    ['国产剧', '/gcj'],
+    ['美剧', '/meijutt'],
+    ['韩剧', '/hanjutv'],
+    ['番剧', '/fanju']
+  ];
+  var UA = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36';
+
+  var content = document.getElementById('content');
+  var statusEl = document.getElementById('status');
+  var tabsEl = document.getElementById('tabs');
+  var searchForm = document.getElementById('searchForm');
+  var kwInput = document.getElementById('kw');
+  var detailSheet = document.getElementById('detailSheet');
+  var detailPanel = document.getElementById('detailPanel');
+
+  var currentUrl = BASE + '/';
+  var lastFocus = null;
+  var detailData = null;
+
+  // ===== 工具函数 =====
+  function abs(url) {
+    try { return new URL(url, BASE + '/').href; } catch(e) { return url || ''; }
+  }
+  function esc(s) {
+    return String(s || '').replace(/[&<>'"]/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c] || c;
+    });
+  }
+  function clean(s) {
+    return String(s || '').replace(/\s+/g, ' ').trim();
+  }
+  function imgUrl(u) {
+    u = abs(u || '');
+    if (!u) return '';
+    if (window.fm && fm.res) {
+      try { return fm.res(u, { headers: { Referer: BASE + '/', 'User-Agent': UA } }); } catch(e) {}
+    }
+    return u;
+  }
+  function setStatus(msg) {
+    statusEl.textContent = msg || '';
+  }
+
+  function whenFm() {
+    if (window.fm) return Promise.resolve(window.fm);
+    return new Promise(function(resolve) {
+      window.addEventListener('fmsdk', function() { resolve(window.fm); }, { once: true });
+      setTimeout(function() { resolve(window.fm || null); }, 1500);
+    });
+  }
+
+  function reqText(url) {
+    url = abs(url);
+    setStatus('加载：' + url);
+    var headers = {
+      'User-Agent': UA,
+      'Referer': BASE + '/',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'zh-CN,zh;q=0.9'
+    };
+    return new Promise(function(resolve, reject) {
+      if (window.fm && fm.req) {
+        fm.req(url, { method: 'GET', headers: headers, responseType: 'text', timeout: 25, credentials: 'include' })
+          .then(function(r) {
+            if (!r.ok) throw new Error(r.error || ('HTTP ' + r.status));
+            return r.body || '';
+          })
+          .then(resolve)
+          .catch(reject);
+      } else {
+        fetch(url, { headers: headers, cache: 'no-store' })
+          .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(resolve)
+          .catch(reject);
+      }
+    });
+  }
+
+  function doc(html) {
+    return new DOMParser().parseFromString(html, 'text/html');
+  }
+
+  // ===== 卡片提取（适配4kcz） =====
+  function cardFromLi(li) {
+    var href = '';
+    var link = li.querySelector('a');
+    if (link) href = abs(link.getAttribute('href') || '');
+    // 放宽选择器，搜索页的 img 没有 .thumb 类
+    var img = li.querySelector('img');
+    var image = '';
+    if (img) {
+        // 优先 data-original（首页/分类），其次 src（搜索页）
+        image = img.getAttribute('data-original') || img.getAttribute('src') || '';
+    }
+    var titleEl = li.querySelector('.dytit a');
+    var title = titleEl ? clean(titleEl.textContent) : '';
+    // 备注优先取 .jidi span，其次 .hdinfo .furk，最后 .inzhuy
+    var remarkEl = li.querySelector('.jidi span') || li.querySelector('.hdinfo .furk') || li.querySelector('.inzhuy');
+    var remark = remarkEl ? clean(remarkEl.textContent) : '';
+    if (!remark) {
+        var hdinfo = li.querySelector('.hdinfo');
+        if (hdinfo) remark = clean(hdinfo.textContent);
+    }
+    return { title: title, remark: remark, href: href, image: abs(image) };
+}
+
+  function uniqueItemsArr(arr) {
+    var map = new Map();
+    arr.forEach(function(x) {
+      if (x && x.href && x.title && !map.has(x.href)) map.set(x.href, x);
+    });
+    return Array.from(map.values());
+  }
+
+  // ===== 解析列表（首页/分类） =====
+  function parseList(html, keyword) {
+    var d = doc(html);
+    var sections = [];
+    var badHost = function(el) {
+      return !!el.closest('.ad, .footer, .popup, .slide, .banner');
+    };
+    var isGood = function(x) {
+      return x && x.href && x.title && x.image && !/^点击观看$/.test(x.title);
+    };
+
+    var heads = d.querySelectorAll('.bt_tit h2');
+    var headList = [];
+    heads.forEach(function(h) {
+      var t = clean(h.textContent).replace('更多', '');
+      if (t && !/搜索|播放记录|广告/.test(t)) {
+        headList.push({ el: h.closest('.bt_tit') || h.parentElement, title: t });
+      }
+    });
+    if (!headList.length) {
+      headList.push({ el: d.body, title: keyword ? ('搜索：' + keyword) : '影片列表' });
+    }
+
+    headList.forEach(function(item) {
+      var container = item.el;
+      var cardContainer = container.querySelector('.bt_img.mi_ne_kd.leibox') ||
+                          container.querySelector('.bt_img.mi_ne_kd.newindex') ||
+                          container.querySelector('.bt_img.mi_ne_kd.mrb') ||
+                          container.querySelector('.bt_img.mi_ne_kd');
+      if (!cardContainer) {
+        var parent = container.parentElement;
+        for (var i = 0; i < 3 && parent; i++) {
+          cardContainer = parent.querySelector('.bt_img.mi_ne_kd');
+          if (cardContainer) break;
+          parent = parent.parentElement;
+        }
+      }
+      var items = [];
+      if (cardContainer) {
+        var lis = cardContainer.querySelectorAll('ul li');
+        lis.forEach(function(li) {
+          if (!badHost(li)) {
+            var card = cardFromLi(li);
+            if (card.href) items.push(card);
+          }
+        });
+      }
+      items = uniqueItemsArr(items).filter(isGood).slice(0, 60);
+      if (items.length) sections.push({ title: item.title, items: items });
+    });
+
+    if (!sections.length) {
+      var allLis = d.querySelectorAll('.bt_img ul li');
+      var allItems = [];
+      allLis.forEach(function(li) {
+        if (!badHost(li)) {
+          var card = cardFromLi(li);
+          if (card.href) allItems.push(card);
+        }
+      });
+      allItems = uniqueItemsArr(allItems).filter(isGood);
+      if (keyword) {
+        allItems = allItems.filter(function(x) {
+          return x.title.indexOf(keyword) !== -1 || x.remark.indexOf(keyword) !== -1;
+        });
+      }
+      allItems = allItems.slice(0, 60);
+      if (allItems.length) {
+        sections.push({ title: keyword ? ('搜索：' + keyword) : '影片列表', items: allItems });
+      }
+    }
+    return sections;
+  }
+
+  // ===== 解析详情（厂长资源专用） =====
+  function parseDetail(html, url) {
+    var d = doc(html);
+
+    // 标题
+    var title = '';
+    var titleEl = d.querySelector('.dy_tit_big');
+    if (titleEl) {
+      title = clean(titleEl.textContent).replace(/\|.*$/, '').trim();
+    }
+    if (!title) title = d.title.replace(/《|》|在线播放.*$/, '').trim();
+
+    // 海报
+    var imgEl = d.querySelector('.dyimg img');
+    var image = imgEl ? abs(imgEl.getAttribute('src') || '') : '';
+
+    // 简介
+    var desc = '';
+    var descEl = d.querySelector('.yp_context');
+    if (descEl) {
+      desc = clean(descEl.textContent).replace(/更多电影$/, '').trim();
+    }
+    if (!desc) desc = '暂无简介';
+    if (desc.length > 500) desc = desc.slice(0, 500) + '…';
+
+    // 字段信息
+    var fields = [];
+    var infoLis = d.querySelectorAll('.moviedteail_list li');
+    infoLis.forEach(function(li) {
+      var text = clean(li.textContent);
+      var parts = text.split('：');
+      if (parts.length >= 2) {
+        var label = clean(parts[0]);
+        var value = parts.slice(1).join('：').trim();
+        if (label && value) fields.push([label, value]);
+      }
+    });
+
+    // 集数列表
+    var eps = [];
+    var epLinks = d.querySelectorAll('.paly_list_btn a');
+    epLinks.forEach(function(a) {
+      var epTitle = clean(a.textContent) || '播放';
+      var epHref = abs(a.getAttribute('href') || '');
+      if (epHref) eps.push({ title: epTitle, href: epHref });
+    });
+
+    // 单线路（厂长资源只有一条线路）
+    var lines = [];
+    if (eps.length) {
+      lines.push({ sid: '1', name: '默认线路', eps: eps });
+    }
+
+    return {
+      title: title,
+      image: image,
+      desc: desc,
+      fields: fields,
+      lines: lines,
+      eps: eps,
+      url: url
+    };
+  }
+
+  // ===== 渲染函数 =====
+  function renderTabs(active) {
+    tabsEl.innerHTML = '';
+    CATS.forEach(function(cat) {
+      var btn = document.createElement('button');
+      btn.className = 'tab' + (abs(cat[1]) === abs(active) ? ' active' : '');
+      btn.textContent = cat[0];
+      btn.dataset.url = abs(cat[1]);
+      btn.onclick = function() { loadPage(btn.dataset.url); };
+      tabsEl.appendChild(btn);
+    });
+  }
+
+  function renderSections(sections) {
+    if (!sections || !sections.length) {
+      content.innerHTML = '<div class="empty">暂无内容</div>';
+      return;
+    }
+    var html = '';
+    sections.forEach(function(sec) {
+      html += '<section class="section"><div class="section-title"><h2>' + esc(sec.title) + '</h2></div><div class="grid">';
+      sec.items.forEach(function(it) {
+        html += '<article class="card" tabindex="0" data-href="' + esc(it.href) + '">' +
+          '<div class="poster">' +
+          (it.image ? '<img loading="lazy" referrerpolicy="no-referrer" src="' + esc(imgUrl(it.image)) + '" alt="' + esc(it.title) + '">' : '<div class="noimg">📺</div>') +
+          '</div>' +
+          '<div class="meta"><div class="name">' + esc(it.title) + '</div><div class="remark">' + esc(it.remark || '点击查看详情') + '</div></div>' +
+          '</article>';
+      });
+      html += '</div></section>';
+    });
+    content.innerHTML = html;
+    content.querySelectorAll('.card').forEach(function(card) {
+      card.onclick = function() { openDetail(card.dataset.href); };
+      card.onkeydown = function(e) { if (e.key === 'Enter') card.click(); };
+    });
+    setTimeout(function() {
+      var first = document.querySelector('.card');
+      if (first) first.focus({ preventScroll: true });
+    }, 50);
+  }
+
+  // ===== 加载页面 =====
+  function loadPage(url) {
+    currentUrl = abs(url);
+    renderTabs(currentUrl);
+    content.innerHTML = '<div class="empty loading">加载中…</div>';
+    reqText(currentUrl)
+      .then(function(html) {
+        var sections = parseList(html);
+        renderSections(sections);
+        var total = sections.reduce(function(sum, s) { return sum + s.items.length; }, 0);
+        setStatus('已加载 ' + total + ' 条内容');
+      })
+      .catch(function(err) {
+        content.innerHTML = '<div class="empty">加载失败：' + esc(err.message) + '</div>';
+        setStatus('错误');
+      });
+  }
+
+  // ===== 搜索 =====
+  function search(q) {
+    q = clean(q);
+    if (!q) {
+      // 无关键词时跳转到搜索页
+      location.href = BASE + '/boss1O1';
+      return;
+    }
+    renderTabs('');
+    content.innerHTML = '<div class="empty loading">搜索中…</div>';
+    var searchUrl = BASE + '/boss1O1?q=' + encodeURIComponent(q);
+    reqText(searchUrl)
+      .then(function(html) {
+        var sections = parseList(html, q);
+        if (!sections.length || !sections[0].items.length) {
+          content.innerHTML = '<div class="empty">未找到相关结果</div>';
+          setStatus('无结果：' + q);
+          return;
+        }
+        sections[0].title = '搜索：' + q;
+        renderSections(sections);
+        setStatus('搜索完成：' + q);
+      })
+      .catch(function(err) {
+        content.innerHTML = '<div class="empty">搜索失败，请重试</div>';
+        setStatus('搜索失败');
+      });
+  }
+
+  // ===== 打开详情浮层 =====
+  function openDetail(url) {
+    lastFocus = document.activeElement;
+    document.body.classList.add('detail-active');
+    detailSheet.classList.add('active');
+    detailPanel.innerHTML = '<div class="empty loading">正在读取详情…</div>';
+    history.pushState({ route: 'detail', url: url }, '', '#detail=' + encodeURIComponent(url));
+
+    reqText(url)
+      .then(function(html) {
+        var data = parseDetail(html, url);
+        detailData = data;
+
+        var fieldsHtml = '';
+        data.fields.forEach(function(f) {
+          fieldsHtml += '<div><b>' + esc(f[0]) + '：</b>' + esc(f[1]) + '</div>';
+        });
+
+        var linesHtml = '';
+        if (data.lines.length) {
+          data.lines.forEach(function(ln, idx) {
+            linesHtml += '<button class="line-tab' + (idx === 0 ? ' active' : '') + '" data-sid="' + esc(ln.sid) + '">' + esc(ln.name) + '(' + ln.eps.length + ')</button>';
+          });
+        } else {
+          linesHtml = '<span class="line-tab active">无线路</span>';
+        }
+
+        var firstLine = data.lines[0] || { eps: [] };
+        var epsHtml = '';
+        if (firstLine.eps.length) {
+          firstLine.eps.forEach(function(ep) {
+            epsHtml += '<button class="ep" data-href="' + esc(ep.href) + '">' + esc(ep.title) + '</button>';
+          });
+        } else {
+          epsHtml = '<div class="empty">暂无分集</div>';
+        }
+
+        detailPanel.innerHTML = 
+          '<button id="closeDetail">返回</button>' +
+          '<div class="detail-head">' +
+          (data.image ? '<img class="detail-pic" referrerpolicy="no-referrer" src="' + esc(imgUrl(data.image)) + '" onerror="this.style.display=\'none\'">' : '') +
+          '<div class="detail-side">' +
+          '<div class="detail-title">' + esc(data.title) + '</div>' +
+          '<div class="detail-info">' + fieldsHtml + '</div>' +
+          '</div></div>' +
+          '<div class="intro-pill">📖 简介</div>' +
+          '<p class="desc">' + esc(data.desc) + '</p>' +
+          '<div class="play-title">🎬 播放线路</div>' +
+          '<div class="line-tabs">' + linesHtml + '</div>' +
+          '<div class="episodes" id="episodeBox">' + epsHtml + '</div>';
+
+        document.getElementById('closeDetail').onclick = closeDetail;
+
+        // 线路切换
+        detailPanel.querySelectorAll('.line-tab').forEach(function(btn) {
+          btn.onclick = function() {
+            detailPanel.querySelectorAll('.line-tab').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var sid = btn.dataset.sid;
+            var line = data.lines.find(function(l) { return l.sid === sid; });
+            if (!line) line = data.lines[0];
+            var box = document.getElementById('episodeBox');
+            if (line && line.eps.length) {
+              box.innerHTML = line.eps.map(function(ep) {
+                return '<button class="ep" data-href="' + esc(ep.href) + '">' + esc(ep.title) + '</button>';
+              }).join('');
+              box.querySelectorAll('.ep').forEach(function(b) {
+                b.onclick = function() { playEpisode(b.dataset.href, data.title + ' ' + b.textContent); };
+              });
+            } else {
+              box.innerHTML = '<div class="empty">该线路暂无分集</div>';
+            }
+          };
+        });
+
+        // 集数点击 → 跳转播放页（注入脚本接管）
+        detailPanel.querySelectorAll('.ep').forEach(function(b) {
+          b.onclick = function() { playEpisode(b.dataset.href, data.title + ' ' + b.textContent); };
+        });
+
+        document.getElementById('closeDetail').focus({ preventScroll: true });
+      })
+      .catch(function(err) {
+        detailPanel.innerHTML = '<button id="closeDetail" onclick="window.__wbClose()">返回</button><div class="empty">详情加载失败：' + esc(err.message) + '</div>';
+        document.getElementById('closeDetail').onclick = closeDetail;
+      });
+  }
+
+  // ===== 播放：直接解析播放地址（完整版，支持 m3u8 和 mp4） =====
+function playEpisode(href, title) {
+    setStatus('正在解析播放地址…');
+    var playUrl = abs(href);
+
+    // 辅助：从 iframe src 中提取 url 参数
+    function extractUrlFromPlayPage(html) {
+        var iframeMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+        if (!iframeMatch) return null;
+        var src = iframeMatch[1];
+        if (src.startsWith('/')) src = BASE + src;
+        var urlParam = src.match(/[?&]url=([^&]+)/);
+        if (urlParam) {
+            return {
+                raw: src,
+                param: decodeURIComponent(urlParam[1])
+            };
+        }
+        if (src.includes('.m3u8') || src.includes('.mp4')) {
+            return { raw: src, param: src };
+        }
+        return null;
+    }
+
+    // 辅助：从 py.php 响应中提取真实视频地址
+    function fetchRealVideoFromPy(iframeUrl) {
+        return new Promise(function(resolve, reject) {
+            reqText(iframeUrl)
+                .then(function(pyHtml) {
+                    // 检查重定向（通过 location 或 meta）
+                    var redirectMatch = pyHtml.match(/window\.location\.href\s*=\s*["']([^"']+)["']/i) ||
+                                        pyHtml.match(/<meta[^>]+http-equiv=["']refresh["'][^>]+url=["']([^"']+)["']/i);
+                    if (redirectMatch) {
+                        var redirectUrl = redirectMatch[1];
+                        if (redirectUrl.startsWith('/')) {
+                            var baseUrl = new URL(iframeUrl);
+                            redirectUrl = baseUrl.origin + redirectUrl;
+                        }
+                        // 递归请求重定向地址
+                        reqText(redirectUrl)
+                            .then(function(finalHtml) {
+                                var match = finalHtml.match(/(https?:\/\/[^"'\s<>]+\.(?:mp4|m3u8)[^"'\s<>]*)/i);
+                                if (match) {
+                                    var url = match[1];
+                                    if (!url.includes('gimg0.baidu.com') && !url.includes('meituan.net')) {
+                                        resolve(url);
+                                        return;
+                                    }
+                                }
+                                reject('未找到视频地址');
+                            })
+                            .catch(reject);
+                        return;
+                    }
+
+                    // 从响应体中提取视频链接
+                    var match = pyHtml.match(/(https?:\/\/[^"'\s<>]+\.(?:mp4|m3u8)[^"'\s<>]*)/i);
+                    if (match) {
+                        var url = match[1];
+                        if (!url.includes('gimg0.baidu.com') && !url.includes('meituan.net')) {
+                            resolve(url);
+                            return;
+                        }
+                    }
+                    reject('未找到视频地址');
+                })
+                .catch(reject);
+        });
+    }
+
+    // 主流程：获取播放页 → 提取 iframe → 解析视频地址
+    reqText(playUrl)
+        .then(function(html) {
+            var result = extractUrlFromPlayPage(html);
+            if (!result) {
+                // 没有 iframe，降级 push
+                setStatus('未找到播放器，尝试推送…');
+                if (window.fm && fm.play) {
+                    fm.play('push://' + playUrl, title || '影片', {
+                        headers: { Referer: BASE + '/', 'User-Agent': UA },
+                        credentials: 'include'
+                    });
+                } else {
+                    location.href = playUrl;
+                }
+                return;
+            }
+
+            // 如果 param 直接是视频地址
+            if (result.param && (result.param.includes('.m3u8') || result.param.includes('.mp4'))) {
+                var videoUrl = result.param;
+                // 确保是完整 URL
+                if (!videoUrl.startsWith('http')) {
+                    var baseUrl = new URL(playUrl);
+                    videoUrl = baseUrl.origin + (videoUrl.startsWith('/') ? '' : '/') + videoUrl;
+                }
+                setStatus('播放中：' + title);
+                fm.play(videoUrl, title || '影片', {
+                    headers: { Referer: BASE + '/', 'User-Agent': UA },
+                    credentials: 'include'
+                }).catch(function() {
+                    // 如果直接播放失败，尝试 push
+                    fm.play('push://' + playUrl, title || '影片', {
+                        headers: { Referer: BASE + '/', 'User-Agent': UA },
+                        credentials: 'include'
+                    });
+                });
+                return;
+            }
+
+            // 否则，请求 iframe（py.php）获取真实地址
+            setStatus('正在解析加密视频地址…');
+            fetchRealVideoFromPy(result.raw)
+                .then(function(videoUrl) {
+                    setStatus('播放中：' + title);
+                    fm.play(videoUrl, title || '影片', {
+                        headers: { Referer: BASE + '/', 'User-Agent': UA },
+                        credentials: 'include'
+                    }).catch(function() {
+                        fm.play('push://' + playUrl, title || '影片', {
+                            headers: { Referer: BASE + '/', 'User-Agent': UA },
+                            credentials: 'include'
+                        });
+                    });
+                })
+                .catch(function(err) {
+                    console.warn('解析失败:', err);
+                    setStatus('解析失败，尝试推送…');
+                    fm.play('push://' + playUrl, title || '影片', {
+                        headers: { Referer: BASE + '/', 'User-Agent': UA },
+                        credentials: 'include'
+                    });
+                });
+        })
+        .catch(function(err) {
+            console.error('请求播放页失败:', err);
+            setStatus('加载失败，尝试推送…');
+            fm.play('push://' + playUrl, title || '影片', {
+                headers: { Referer: BASE + '/', 'User-Agent': UA },
+                credentials: 'include'
+            });
+        });
+}
+
+  function closeDetail() {
+    document.body.classList.remove('detail-active');
+    detailSheet.classList.remove('active');
+    if (location.hash.startsWith('#detail=')) history.back();
+    if (lastFocus && lastFocus.focus) setTimeout(function() { lastFocus.focus({ preventScroll: true }); }, 50);
+  }
+  window.__wbClose = closeDetail;
+
+  // ===== 键盘事件 =====
+  function handleKeys(e) {
+    if (e.key === 'Escape' || e.key === 'Backspace') {
+      if (detailSheet.classList.contains('active')) {
+        e.preventDefault();
+        closeDetail();
+        return;
+      }
+    }
+    if (e.key === 'Enter') {
+      var active = document.activeElement;
+      if (active && active.classList && active.classList.contains('card')) {
+        active.click();
+      }
+    }
+  }
+  document.addEventListener('keydown', handleKeys, true);
+
+  // ===== 初始化 =====
+  function boot() {
+    setStatus('正在初始化…');
+    renderTabs(BASE + '/');
+    searchForm.onsubmit = function(e) {
+      e.preventDefault();
+      search(kwInput.value);
+    };
+    window.addEventListener('popstate', function() {
+      if (detailSheet.classList.contains('active')) {
+        closeDetail();
+      } else {
+        loadPage(currentUrl);
+      }
+    });
+    loadPage(BASE + '/');
+  }
+
+  whenFm().then(function() {
+    boot();
+  }).catch(function() {
+    boot();
+  });
+
+})();
+</script>
+</body>
+</html>
