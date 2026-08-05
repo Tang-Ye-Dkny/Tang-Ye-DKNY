@@ -304,4 +304,118 @@
             init();
         }
     });
+
+    // ===== 独立返回按钮模块（真实网站全局常驻） =====
+    (function() {
+        // 只在 libvios.com 真实网站执行
+        if (window.location.hostname.indexOf('libvios.com') === -1) return;
+
+        // 避免重复添加
+        if (document.getElementById('fmBackButton')) return;
+
+        console.log('[返回键] 模块启动，当前 URL:', window.location.href);
+
+        // 获取返回地址（多种来源）
+        function getReturnUrl() {
+            // 1. 优先从 sessionStorage 读取（之前保存的）
+            var stored = sessionStorage.getItem('libvio_return_url');
+            if (stored) {
+                console.log('[返回键] 从 sessionStorage 获取返回地址:', stored);
+                return stored;
+            }
+
+            // 2. 从 URL 查询参数获取
+            var urlParams = new URLSearchParams(window.location.search);
+            var paramUrl = urlParams.get('return_url');
+            if (paramUrl) {
+                console.log('[返回键] 从 URL 参数获取返回地址:', paramUrl);
+                return paramUrl;
+            }
+
+            // 3. 从 URL hash 获取
+            var hash = window.location.hash;
+            if (hash && hash.startsWith('#return_url=')) {
+                try {
+                    var hashUrl = decodeURIComponent(hash.substring('#return_url='.length));
+                    console.log('[返回键] 从 hash 获取返回地址:', hashUrl);
+                    return hashUrl;
+                } catch(e) {}
+            }
+
+            // 4. 从 referrer 获取（如果是从自定义界面跳转来的）
+            if (document.referrer && document.referrer.indexOf(window.location.hostname) === -1) {
+                var ref = document.referrer;
+                console.log('[返回键] 从 referrer 获取返回地址:', ref);
+                // 确保返回地址包含 mode=html
+                if (ref.indexOf('mode=') === -1) {
+                    ref += (ref.indexOf('?') === -1 ? '?' : '&') + 'mode=html';
+                }
+                return ref;
+            }
+
+            console.log('[返回键] 未检测到返回地址');
+            return null;
+        }
+
+        var returnUrl = getReturnUrl();
+        if (!returnUrl) {
+            console.log('[返回键] 没有返回地址，不添加按钮。');
+            return;
+        }
+
+        // 存入 sessionStorage 供后续页面使用
+        sessionStorage.setItem('libvio_return_url', returnUrl);
+
+        // 确保 DOM 就绪后再添加按钮
+        function addButton() {
+            if (!document.body) {
+                setTimeout(addButton, 50);
+                return;
+            }
+            if (document.getElementById('fmBackButton')) return;
+
+            var btn = document.createElement('div');
+            btn.id = 'fmBackButton';
+            btn.innerHTML = '‹ 返回';
+            btn.style.cssText = [
+                'position:fixed',
+                'top:16px',
+                'left:16px',
+                'z-index:99999',
+                'background:rgba(0,0,0,0.55)',
+                'backdrop-filter:blur(6px)',
+                'color:#fff',
+                'font-size:18px',
+                'font-weight:500',
+                'padding:10px 18px',
+                'border-radius:30px',
+                'border:1px solid rgba(255,255,255,0.2)',
+                'box-shadow:0 4px 16px rgba(0,0,0,0.4)',
+                'cursor:pointer',
+                'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif',
+                'user-select:none',
+                'transition:background 0.2s'
+            ].join(';');
+
+            btn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.75)'; };
+            btn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.55)'; };
+            btn.onclick = function() {
+                // 清除存储，避免下次误用（但也可以保留，看需求）
+                // sessionStorage.removeItem('libvio_return_url');
+                window.location.href = returnUrl;
+            };
+
+            document.body.appendChild(btn);
+            console.log('[返回键] ✅ 已添加返回按钮，返回地址:', returnUrl);
+        }
+
+        // 立即尝试，如果 body 未就绪则等待
+        if (document.body) {
+            addButton();
+        } else {
+            document.addEventListener('DOMContentLoaded', addButton);
+        }
+    })();
+    // ===== 返回按钮模块结束 ======
+
 })();

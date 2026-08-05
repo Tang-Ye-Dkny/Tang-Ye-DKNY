@@ -126,7 +126,7 @@
             }
         }
 
-        // ----- 🧹 新增：廣告清理函數 -----
+        // ----- 🧹 廣告清理函數 -----
         function removeAds() {
             try {
                 // 1. 隱藏所有來自 static.okokserver.com/img/ 的廣告圖片
@@ -141,12 +141,12 @@
 
                 // 2. 隱藏已知的廣告容器
                 var adSelectors = [
-                    '.love-row-wrap',           // 详情页底部广告行
-                    '.love-item',               // 赞助链接
-                    '#player-vip',              // 播放页VIP广告横幅
-                    '.ucl-final-banner',        // 直播广告横幅
-                    '.player-news',             // 顶部的警告条（非广告但可隐藏）
-                    '.switch-box .item img[src*="okokserver"]' // 播放页右侧GIF广告
+                    '.love-row-wrap',           // 詳情頁底部廣告行
+                    '.love-item',               // 贊助連結
+                    '#player-vip',              // 播放頁VIP廣告橫幅
+                    '.ucl-final-banner',        // 直播廣告橫幅
+                    '.player-news',             // 頂部的警告條（非廣告但可隱藏）
+                    '.switch-box .item img[src*="okokserver"]' // 播放頁右側GIF廣告
                 ];
                 adSelectors.forEach(function(sel) {
                     document.querySelectorAll(sel).forEach(function(el) {
@@ -160,7 +160,7 @@
                     if (container) container.style.display = 'none';
                 });
 
-                console.log('[华视] 廣告已清理');
+                console.log('[華視] 廣告已清理');
             } catch(e) { /* 靜默 */ }
         }
 
@@ -208,4 +208,108 @@
             init();
         }
     });
+
+    // ===== 獨立返回按鈕模組（優化增強版） =====
+    (function() {
+        // 只在 huavod.com 站內生效
+        if (window.location.hostname.indexOf('huavod.com') === -1) return;
+        if (document.getElementById('fmBackButton')) return;
+
+        var STORAGE_KEY = 'huavod_global_return_url';
+
+        // 取得並持久化儲存返回地址（解決跨域與站內跳轉後丟失問題）
+        function getReturnUrl() {
+            var hash = window.location.hash;
+            var returnUrl = '';
+
+            // 1. 優先從 Hash 解析 (最可靠)
+            if (hash && hash.indexOf('return_url=') !== -1) {
+                try {
+                    var raw = hash.split('return_url=')[1];
+                    returnUrl = decodeURIComponent(raw.split('&')[0]);
+                } catch(e) {}
+            }
+
+            // 若從 Hash 拿到地址，立刻同步保存到本地持久化儲存
+            if (returnUrl) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, returnUrl);
+                    sessionStorage.setItem(STORAGE_KEY, returnUrl);
+                } catch(e) {}
+                return returnUrl;
+            }
+
+            // 2. 其次從本地持久化儲存讀取 (避免換頁後丟失)
+            try {
+                var stored = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+                if (stored) return stored;
+            } catch(e) {}
+
+            // 3. 從 URL 查詢參數讀取
+            try {
+                var urlParams = new URLSearchParams(window.location.search);
+                var paramUrl = urlParams.get('return_url');
+                if (paramUrl) return paramUrl;
+            } catch(e) {}
+
+            // 4. 從 Referrer 讀取
+            if (document.referrer && document.referrer.indexOf(window.location.hostname) === -1) {
+                return document.referrer;
+            }
+
+            // 5. 兜底地址
+            return 'http://127.0.0.1:9978/file/%E6%B8%AC%E8%A9%A6/html/huavod.html?mode=html';
+        }
+
+        var finalReturnUrl = getReturnUrl();
+
+        // 渲染 UI 按鈕
+        function addButton() {
+            if (!document.body || document.getElementById('fmBackButton')) return;
+
+            var btn = document.createElement('div');
+            btn.id = 'fmBackButton';
+            btn.innerHTML = '‹ 返回';
+            btn.style.cssText = [
+                'position:fixed',
+                'top:16px',
+                'left:16px',
+                'z-index:999999',
+                'background:rgba(0,0,0,0.65)',
+                'backdrop-filter:blur(8px)',
+                'color:#ffffff',
+                'font-size:16px',
+                'font-weight:bold',
+                'padding:8px 18px',
+                'border-radius:30px',
+                'border:1px solid rgba(255,255,255,0.25)',
+                'box-shadow:0 4px 16px rgba(0,0,0,0.4)',
+                'cursor:pointer',
+                'user-select:none',
+                'transition:all 0.2s'
+            ].join(';');
+
+            btn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.85)'; };
+            btn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.65)'; };
+
+            btn.onclick = function() {
+                console.log('[返回鍵] 觸發返回，跳轉至:', finalReturnUrl);
+                if (finalReturnUrl) {
+                    // 使用 location.replace 避免留在原網頁的歷史紀錄中
+                    window.location.replace(finalReturnUrl);
+                } else {
+                    history.back();
+                }
+            };
+
+            document.body.appendChild(btn);
+        }
+
+        if (document.body) {
+            addButton();
+        } else {
+            document.addEventListener('DOMContentLoaded', addButton);
+        }
+    })();
+
 })();
