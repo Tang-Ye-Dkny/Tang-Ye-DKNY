@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>华视影院 WebHome</title>
+<title>LIBVIO WebHome</title>
 <style>
-  /* ===== 样式：复用歪比，增加详情浮层 ===== */
+  /* ===== 樣式：沿用廠長/華視的深色透明風格 ===== */
   :root{--panel-rgb:42,50,58;--panel:rgba(var(--panel-rgb),0.62);--panel-soft:rgba(var(--panel-rgb),0.44);--panel-strong:rgba(var(--panel-rgb),0.86);--line:rgba(255,255,255,0.16);--text:#f7fbff;--muted:rgba(247,251,255,0.68);--accent:#ff6b35;--accent2:#ffb86b;--radius:16px;--shadow:0 12px 40px rgba(0,0,0,0.3)}
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%;background:transparent;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -38,7 +38,7 @@
   .empty{padding:24px 16px;text-align:center;color:var(--muted);background:var(--panel-soft);border:1px dashed var(--line);border-radius:var(--radius)}
   .loading{opacity:.7}
 
-  /* ===== 详情浮层 ===== */
+  /* ===== 詳情浮層 ===== */
   .sheet{position:fixed;inset:0;z-index:40;display:none;background:transparent;overflow:hidden}
   .sheet.active{display:block}
   .sheet-inner{height:100vh;padding:12px;background:transparent;overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -60,7 +60,7 @@
   #closeDetail{margin:0 0 12px;padding:8px 20px;border-radius:999px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,184,107,0.5);cursor:pointer}
   body.detail-active .app{visibility:hidden;pointer-events:none}
 
-  /* ===== 响应式 ===== */
+  /* ===== 響應式 ===== */
   @media(min-width:720px){.grid{grid-template-columns:repeat(5,1fr)}.app{padding:16px 30px 40px}.detail-head{grid-template-columns:160px 1fr}.detail-pic{width:160px}.episodes{grid-template-columns:repeat(6,1fr)}}
   @media(min-width:1100px){.grid{grid-template-columns:repeat(7,1fr)}.app{max-width:1380px;margin:0 auto}.sheet-inner{max-width:1180px;margin:0 auto}}
   @media(max-width:480px){.app{padding:6px 6px 20px}.grid{grid-template-columns:repeat(3,1fr);gap:6px}.meta{padding:5px 6px 6px}.name{font-size:12px}.remark{font-size:10px}.detail-head{grid-template-columns:38% 1fr}.detail-title{font-size:20px}.episodes{grid-template-columns:repeat(4,1fr)}.ep{font-size:13px;padding:7px 2px}}
@@ -69,7 +69,20 @@
   html.no-aspect-ratio .poster img{position:absolute;top:0;left:0;width:100%;height:100%}
   html.no-css-functions .detail-panel{border-radius:14px}
 
-  /* ===== 新增：模式切换栏样式 ===== */
+  /* ===== 廣告隱藏 ===== */
+  #note, .popup, .t-img-box, .a_ms, .x-box, .urgent-banner,
+  .module-adslist, .ads_w, [id*="iaujwnefhw"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    opacity: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* ===== 模式切換欄 ===== */
   #mode-switcher {
     background: rgba(0,0,0,0.8);
     padding: 8px 16px;
@@ -107,33 +120,33 @@
 </head>
 <body>
 <div class="app" id="app">
-  <!-- ===== 模式切换栏 ===== -->
+  <!-- ===== 模式切換欄 ===== -->
   <div id="mode-switcher">
     <span>🌐 模式：</span>
     <button id="btn-html" class="mode-btn active">📄 HTML 界面</button>
-    <button id="btn-web" class="mode-btn">🌐 Web 验证</button>
+    <button id="btn-web" class="mode-btn">🌐 Web 驗證</button>
   </div>
 
   <div class="top">
     <div class="bar">
-      <div class="brand">华视<b>影院</b></div>
+      <div class="brand">LIB<b>VIO</b></div>
       <form class="search" id="searchForm">
-        <input id="kw" type="text" placeholder="搜索影片、剧集…" autocomplete="off" />
+        <input id="kw" type="text" placeholder="搜索電影、劇集…" autocomplete="off" />
         <button class="btn primary" type="submit">搜索</button>
       </form>
     </div>
     <div class="tabs" id="tabs"></div>
   </div>
-  <div class="status" id="status">准备加载…</div>
+  <div class="status" id="status">準備載入…</div>
   <main id="content"></main>
 </div>
 
-<!-- 详情浮层 -->
+<!-- 詳情浮層 -->
 <div class="sheet" id="detailSheet"><div class="sheet-inner"><div class="detail-panel" id="detailPanel"></div></div></div>
 
 <script>
 // ============================================================
-// 兼容引导层 (ES5 + polyfill)
+// 相容引導層 (ES5 + polyfill)
 // ============================================================
 (function() {
   'use strict';
@@ -218,66 +231,19 @@
 })();
 
 // ============================================================
-// 主脚本
+// 主腳本 — LIBVIO 專用
 // ============================================================
 (function() {
   'use strict';
 
-  // ====== 模式切换模块（START） ======
-(function() {
-  var btnHtml = document.getElementById('btn-html');
-  var btnWeb = document.getElementById('btn-web');
-  if (!btnHtml || !btnWeb) return;
-
-  // 默认高亮 HTML 按钮
-  btnHtml.classList.add('active');
-  btnWeb.classList.remove('active');
-
-  // 点击「Web 验证」
-  btnWeb.addEventListener('click', function() {
-    // 获取当前完整 URL，去除 _fm_reload 参数
-    var url = new URL(window.location.href);
-    url.searchParams.delete('_fm_reload');
-    url.searchParams.set('mode', 'html');
-    var current = url.toString();
-    console.log('[切换] 当前页面地址:', current);
-    
-    // 存入 sessionStorage（备用）
-    sessionStorage.setItem('huavod_return_url', current);
-    
-    // 跳转到 huavod，将返回地址放在 hash 中
-    window.location.href = 'https://huavod.com#return_url=' + encodeURIComponent(current);
-  });
-
-  // 点击「HTML 界面」
-  btnHtml.addEventListener('click', function() {
-    if (window.location.hostname.indexOf('huavod.com') !== -1) {
-      var hash = window.location.hash;
-      if (hash && hash.startsWith('#return_url=')) {
-        var returnUrl = decodeURIComponent(hash.substring('#return_url='.length));
-        window.location.href = returnUrl;
-        return;
-      }
-      var stored = sessionStorage.getItem('huavod_return_url');
-      if (stored) {
-        window.location.href = stored;
-        return;
-      }
-    }
-    window.location.reload();
-  });
-})();
-// ====== 模式切换模块（END） ======
-
-  var BASE = 'https://huavod.com';
+  var BASE = 'https://www.libvios.com';
   var CATS = [
-    ['首页', '/'],
-    ['电影', '/vodshow/1.html'],
-    ['电视剧', '/vodshow/2.html'],
-    ['动漫', '/vodshow/4.html'],
-    ['综艺', '/vodshow/3.html'],
-    ['短剧', '/vodshow/5.html'],
-    ['纪录片', '/vodshow/42.html']
+    ['首頁', '/'],
+    ['電影', '/type/1.html'],
+    ['劇集', '/type/2.html'],
+    ['番劇', '/type/4.html'],
+    ['日韓', '/type/15.html'],
+    ['歐美', '/type/16.html']
   ];
   var UA = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36';
 
@@ -293,7 +259,43 @@
   var lastFocus = null;
   var detailData = null;
 
-  // ===== 工具函数 =====
+  // ===== 模式切換邏輯 =====
+  var urlParams = new URLSearchParams(window.location.search);
+  var mode = urlParams.get('mode') || 'html';
+
+  function switchMode(newMode) {
+    if (newMode === mode) return;
+    var url = new URL(window.location.href);
+    if (newMode === 'web') {
+      var returnUrl = window.location.href.split('?')[0];
+      if (!returnUrl.includes('?mode=html')) {
+        returnUrl += '?mode=html';
+      }
+      var targetUrl = BASE + '/?return_url=' + encodeURIComponent(returnUrl);
+      window.location.href = targetUrl;
+    } else {
+      url.searchParams.set('mode', 'html');
+      window.location.href = url.toString();
+    }
+  }
+
+  document.getElementById('btn-html').addEventListener('click', function() {
+    switchMode('html');
+  });
+  document.getElementById('btn-web').addEventListener('click', function() {
+    switchMode('web');
+  });
+
+  if (mode === 'web') {
+    var returnUrl = window.location.href.split('?')[0] + '?mode=html';
+    window.location.href = BASE + '/?return_url=' + encodeURIComponent(returnUrl);
+    return;
+  }
+
+  document.getElementById('btn-html').classList.add('active');
+  document.getElementById('btn-web').classList.remove('active');
+
+  // ===== 工具函數 =====
   function abs(url) {
     try { return new URL(url, BASE + '/').href; } catch(e) { return url || ''; }
   }
@@ -317,6 +319,13 @@
     statusEl.textContent = msg || '';
   }
 
+  // 生成帶有 return_url 參數的備用跳轉網址（解決降級跳轉時丟失返回按鈕的問題）
+  function getFallbackWebUrl(targetUrl) {
+    var currentAppUrl = window.location.href.split('?')[0] + '?mode=html';
+    var delimiter = targetUrl.indexOf('?') !== -1 ? '&' : '?';
+    return targetUrl + delimiter + 'return_url=' + encodeURIComponent(currentAppUrl);
+  }
+
   function whenFm() {
     if (window.fm) return Promise.resolve(window.fm);
     return new Promise(function(resolve) {
@@ -327,7 +336,7 @@
 
   function reqText(url) {
     url = abs(url);
-    setStatus('加载：' + url);
+    setStatus('載入：' + url);
     var headers = {
       'User-Agent': UA,
       'Referer': BASE + '/',
@@ -359,41 +368,20 @@
     return new DOMParser().parseFromString(html, 'text/html');
   }
 
-  // ===== 卡片提取（兼容首页/分类/搜索） =====
+  // ===== 卡片提取 =====
   function cardFromBox(box) {
     var href = '';
-    var title = '';
+    var link = box.querySelector('a.stui-vodlist__thumb');
+    if (link) href = abs(link.getAttribute('href') || '');
+    var img = box.querySelector('img.lazyload');
     var image = '';
-    var remark = '';
-
-    // 1. 尝试搜索页结构
-    var thumbTxt = box.querySelector('.thumb-txt a');
-    if (thumbTxt) {
-      href = abs(thumbTxt.getAttribute('href') || '');
-      title = clean(thumbTxt.textContent);
-    }
-    // 2. 尝试普通列表结构
-    if (!href) {
-      var link = box.querySelector('a.public-list-exp');
-      if (link) href = abs(link.getAttribute('href') || '');
-      var titleEl = box.querySelector('.time-title');
-      if (titleEl) title = clean(titleEl.textContent);
-    }
-    // 3. 图片
-    var img = box.querySelector('img.lazy');
     if (img) {
-      image = img.getAttribute('data-src') || img.getAttribute('src') || '';
+      image = img.getAttribute('data-original') || img.getAttribute('src') || '';
     }
-    // 4. 备注
-    var remarkEl = box.querySelector('.public-list-prb') || box.querySelector('.public-list-subtitle') || box.querySelector('.thumb-else');
-    if (remarkEl) remark = clean(remarkEl.textContent);
-
-    if (!title && href) {
-      // 从 href 中提取最后一段作为标题
-      var parts = href.split('/');
-      var last = parts[parts.length-1];
-      title = last.replace(/\.html$/, '').replace(/-/g, ' ');
-    }
+    var titleEl = box.querySelector('.stui-vodlist__detail .title a') || box.querySelector('.title a');
+    var title = titleEl ? clean(titleEl.textContent) : '';
+    var remarkEl = box.querySelector('.pic-text') || box.querySelector('.pic-tag-top');
+    var remark = remarkEl ? clean(remarkEl.textContent) : '';
     return { title: title, remark: remark, href: href, image: abs(image) };
   }
 
@@ -410,46 +398,49 @@
     var d = doc(html);
     var sections = [];
     var badHost = function(el) {
-      return !!el.closest('.pop-list-body,.search-hot,.history,.footer,.head-more,.slide-time,.banner,.swiper,.large-swiper,.popup');
+      return !!el.closest('.ad, .footer, .popup, .slide, .banner, .t-img-box, #note');
     };
     var isGood = function(x) {
-      return x && x.href && x.title && x.image && !/^点击观看$/.test(x.title);
+      return x && x.href && x.title && x.image && !/^點擊觀看$/.test(x.title);
     };
-    // 找模块标题
-    var heads = d.querySelectorAll('.title-a .this-name, .title-a h2, .module-title');
+
+    var heads = d.querySelectorAll('.stui-vodlist__head h3 a, .stui-vodlist__head h3');
     var headList = [];
     heads.forEach(function(h) {
       var t = clean(h.textContent).replace('更多', '');
-      if (t && !/搜索|播放记录|搜索历史|热门搜索|更多/.test(t)) {
-        headList.push({ el: h.closest('.title-a') || h.parentElement, title: t });
+      if (t && !/搜索|播放記錄|廣告/.test(t)) {
+        headList.push({ el: h.closest('.stui-vodlist__head') || h.parentElement, title: t });
       }
     });
     if (!headList.length) {
       headList.push({ el: d.body, title: keyword ? ('搜索：' + keyword) : '影片列表' });
     }
+
     headList.forEach(function(item) {
       var container = item.el;
-      var boxes = container.querySelectorAll('.public-list-box');
-      if (!boxes.length) {
-        var parent = container.parentElement;
-        for (var i = 0; i < 3 && parent; i++) {
-          boxes = parent.querySelectorAll('.public-list-box');
-          if (boxes.length) break;
-          parent = parent.parentElement;
-        }
+      var listContainer = container.nextElementSibling;
+      if (!listContainer || !listContainer.classList.contains('stui-vodlist')) {
+        listContainer = container.parentElement.querySelector('.stui-vodlist');
+      }
+      if (!listContainer) {
+        listContainer = container.querySelector('.stui-vodlist');
       }
       var items = [];
-      boxes.forEach(function(box) {
-        if (!badHost(box)) {
-          var card = cardFromBox(box);
-          if (card.href) items.push(card);
-        }
-      });
+      if (listContainer) {
+        var boxes = listContainer.querySelectorAll('li .stui-vodlist__box');
+        boxes.forEach(function(box) {
+          if (!badHost(box)) {
+            var card = cardFromBox(box);
+            if (card.href) items.push(card);
+          }
+        });
+      }
       items = uniqueItemsArr(items).filter(isGood).slice(0, 60);
       if (items.length) sections.push({ title: item.title, items: items });
     });
+
     if (!sections.length) {
-      var allBoxes = d.querySelectorAll('.public-list-box');
+      var allBoxes = d.querySelectorAll('.stui-vodlist__box');
       var allItems = [];
       allBoxes.forEach(function(box) {
         if (!badHost(box)) {
@@ -471,104 +462,217 @@
     return sections;
   }
 
-  // ===== 解析详情（简介、线路、集数） =====
+  // ===== 解析詳情 =====
   function parseDetail(html, url) {
     var d = doc(html);
-    // 标题
-    var title = '';
-    var titleEl = d.querySelector('.slide-info-title') || d.querySelector('.detail-title') || d.querySelector('h1');
-    if (titleEl) title = clean(titleEl.textContent);
-    if (!title) title = d.title.replace(/^.*?《|》.*$/, '').replace(/免费.*$/, '').trim();
 
-    // 海报
-    var pic = d.querySelector('.detail-pic img, .detail-pic');
+    var title = '';
+    var titleEl = d.querySelector('h1.title');
+    if (titleEl) title = clean(titleEl.textContent);
+    if (!title) title = d.title.replace(/ - LIBVIO$/, '').trim();
+
     var image = '';
-    if (pic) {
-      image = pic.getAttribute('data-src') || pic.getAttribute('src') || '';
-      if (!image && pic.style.backgroundImage) {
-        var match = pic.style.backgroundImage.match(/url\(['"]?([^'")]+)['"]?\)/);
-        if (match) image = match[1];
-      }
+    var imgEl = d.querySelector('#js-poster-img');
+    if (imgEl) {
+      image = imgEl.getAttribute('data-original') || imgEl.getAttribute('src') || '';
+    }
+    if (!image) {
+      var posterWrap = d.querySelector('.vod-poster__wrap img');
+      if (posterWrap) image = posterWrap.getAttribute('data-original') || posterWrap.getAttribute('src') || '';
     }
     image = abs(image);
 
-    // 简介
     var desc = '';
-    var descNode = d.querySelector('#height_limit') || d.querySelector('.text.cor3') || d.querySelector('.vod-detail .text');
-    if (descNode) desc = clean(descNode.textContent).replace(/展开$/, '');
-    if (!desc) desc = '暂无简介';
+    var descEl = d.querySelector('.detail-sketch') || d.querySelector('.detail-content');
+    if (descEl) desc = clean(descEl.textContent);
+    if (!desc) desc = '暫無簡介';
+    if (desc.length > 500) desc = desc.slice(0, 500) + '…';
 
-    // 线路
-    var lineTabs = d.querySelectorAll('.anthology-tab a');
+    var fields = [];
+    var metaItems = d.querySelectorAll('.vod-meta .meta-item');
+    metaItems.forEach(function(item) {
+      var text = clean(item.textContent);
+      if (text && text.length > 1 && !/^\d+$/.test(text)) {
+        if (text.includes('主演') || text.includes('導演')) {
+          var parts = text.split('：');
+          fields.push([parts[0] || text, parts[1] || '']);
+        } else {
+          fields.push([text, '']);
+        }
+      }
+    });
+
     var lines = [];
-    if (lineTabs.length) {
-      // 每个线路对应一个 .anthology-list-box
-      var lineBoxes = d.querySelectorAll('.anthology-list .anthology-list-box');
-      lineTabs.forEach(function(tab, idx) {
-        var lineName = clean(tab.textContent);
-        var eps = [];
-        var box = lineBoxes[idx];
-        if (box) {
-          var epLinks = box.querySelectorAll('ul.anthology-list-play li a');
-          epLinks.forEach(function(a) {
-            var epTitle = clean(a.textContent) || '播放';
-            var epHref = abs(a.getAttribute('href') || '');
-            if (epHref) eps.push({ title: epTitle, href: epHref });
-          });
-        }
-        if (eps.length) {
-          lines.push({ sid: String(idx+1), name: lineName, eps: eps });
-        }
-      });
-    }
-    // 如果没有线路，尝试直接找集数（默认线路）
-    if (!lines.length) {
-      var defaultEps = [];
-      var allLinks = d.querySelectorAll('.anthology-list-play li a');
-      allLinks.forEach(function(a) {
+    var playlistPanels = d.querySelectorAll('.playlist-panel');
+    playlistPanels.forEach(function(panel) {
+      var head = panel.querySelector('.panel-head h3');
+      var lineName = head ? clean(head.textContent) : '預設線路';
+      var epLinks = panel.querySelectorAll('ul.stui-content__playlist li a');
+      var eps = [];
+      epLinks.forEach(function(a) {
         var epTitle = clean(a.textContent) || '播放';
         var epHref = abs(a.getAttribute('href') || '');
-        if (epHref) defaultEps.push({ title: epTitle, href: epHref });
+        if (epHref) eps.push({ title: epTitle, href: epHref });
       });
-      if (defaultEps.length) {
-        lines.push({ sid: '1', name: '默认线路', eps: defaultEps });
+      if (eps.length) {
+        lines.push({ sid: 'line-' + lines.length, name: lineName, eps: eps });
       }
-    }
+    });
 
-    // 字段（导演、演员等）
-    var fields = [];
-    var infoEl = d.querySelector('.detail-info .slide-info');
-    if (infoEl) {
-      var items = infoEl.querySelectorAll('strong.r6');
-      items.forEach(function(strong) {
-        var label = clean(strong.textContent).replace(/[：:]/g, '').trim();
-        var value = '';
-        var next = strong.nextSibling;
-        while (next && next.nodeType === 3) {
-          value += next.textContent;
-          next = next.nextSibling;
-        }
-        // 也可能有多个文本节点
-        var parent = strong.parentElement;
-        if (parent) {
-          var text = parent.textContent.replace(strong.textContent, '').trim();
-          value = text.replace(/^[：:]\s*/, '').trim();
-        }
-        if (value) fields.push([label, value]);
+    if (!lines.length) {
+      var allEpLinks = d.querySelectorAll('ul.stui-content__playlist li a');
+      var eps = [];
+      allEpLinks.forEach(function(a) {
+        var epTitle = clean(a.textContent) || '播放';
+        var epHref = abs(a.getAttribute('href') || '');
+        if (epHref) eps.push({ title: epTitle, href: epHref });
       });
+      if (eps.length) {
+        lines.push({ sid: 'default', name: '預設線路', eps: eps });
+      }
     }
 
     return {
       title: title,
       image: image,
       desc: desc,
-      lines: lines,
       fields: fields,
+      lines: lines,
+      eps: lines.length ? lines[0].eps : [],
       url: url
     };
   }
 
-  // ===== 渲染函数 =====
+  // ===== 廣告清理 =====
+  function removeAds() {
+    try {
+      var selectors = [
+        '#note', '.popup', '.t-img-box', '.a_ms', '.x-box', '.urgent-banner',
+        '.module-adslist', '.ads_w', '[id*="iaujwnefhw"]', '.foot-permalink'
+      ];
+      selectors.forEach(function(sel) {
+        var els = document.querySelectorAll(sel);
+        els.forEach(function(el) {
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('height', '0', 'important');
+          el.style.setProperty('margin', '0', 'important');
+          el.style.setProperty('padding', '0', 'important');
+          el.style.setProperty('opacity', '0', 'important');
+          el.style.setProperty('pointer-events', 'none', 'important');
+          if (typeof el.remove === 'function') el.remove();
+        });
+      });
+      document.querySelectorAll('img').forEach(function(img) {
+        var src = img.src || img.getAttribute('data-original') || '';
+        if (src.includes('1050X200.gif') || src.includes('meituan.net')) {
+          var parent = img.closest('.t-img-box, .ad, #note, .popup');
+          if (parent) {
+            parent.style.display = 'none';
+          }
+        }
+      });
+    } catch(e) {}
+  }
+
+  function watchAds() {
+    var observer = new MutationObserver(function() {
+      removeAds();
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  // ===== 播放解析（修復：降級跳轉帶上 return_url 參數） =====
+  function isValidVideoUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    return /^https?:\/\/[^\s"'<>]+\.(?:mp4|m3u8|mov|flv)/i.test(url) || url.includes('cloudcube');
+  }
+
+  function cleanVideoUrl(url) {
+    if (!url || typeof url !== 'string') return url;
+    return url.replace(/\\\//g, '/');
+  }
+
+  function tryDecodeBase64(str) {
+    try {
+      if (!/^[A-Za-z0-9+/=]+$/.test(str)) return null;
+      var decoded = atob(str);
+      if (isValidVideoUrl(decoded)) return decoded;
+      return null;
+    } catch(e) { return null; }
+  }
+
+  function extractVideoUrlFromHtml(html) {
+    var playerMatch = html.match(/var\s+player_aaaa\s*=\s*\{[^}]*"url"\s*:\s*"([^"]+)"/i);
+    if (playerMatch) {
+      var cleaned = cleanVideoUrl(playerMatch[1]);
+      if (isValidVideoUrl(cleaned)) return cleaned;
+      var base64Decoded = tryDecodeBase64(cleaned);
+      if (base64Decoded && isValidVideoUrl(base64Decoded)) return base64Decoded;
+    }
+    var anyMatch = html.match(/(https?:\/\/[^"'\s]+\.(?:mp4|m3u8)[^"'\s]*)/i);
+    if (anyMatch) {
+      var cleaned = cleanVideoUrl(anyMatch[1]);
+      if (isValidVideoUrl(cleaned)) return cleaned;
+    }
+    return null;
+  }
+
+  function playEpisode(href, title) {
+    setStatus('正在解析播放地址…');
+    var playUrl = abs(href);
+
+    reqText(playUrl)
+      .then(function(html) {
+        var videoUrl = extractVideoUrlFromHtml(html);
+        if (videoUrl) {
+          setStatus('播放中：' + title);
+          fm.play(videoUrl, title || 'LIBVIO 影片', {
+            headers: { Referer: BASE + '/', 'User-Agent': UA },
+            credentials: 'include'
+          }).catch(function() {
+            location.href = getFallbackWebUrl(playUrl);
+          });
+          return;
+        }
+
+        var iframeMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+        if (iframeMatch) {
+          var iframeSrc = iframeMatch[1];
+          if (iframeSrc.startsWith('/')) {
+            var baseUrl = new URL(playUrl);
+            iframeSrc = baseUrl.origin + iframeSrc;
+          }
+          setStatus('正在解析加密視頻地址…');
+          reqText(iframeSrc)
+            .then(function(iframeHtml) {
+              var iframeUrl = extractVideoUrlFromHtml(iframeHtml);
+              if (iframeUrl) {
+                setStatus('播放中：' + title);
+                fm.play(iframeUrl, title || 'LIBVIO 影片', {
+                  headers: { Referer: BASE + '/', 'User-Agent': UA },
+                  credentials: 'include'
+                }).catch(function() {
+                  location.href = getFallbackWebUrl(playUrl);
+                });
+                return;
+              }
+              location.href = getFallbackWebUrl(playUrl);
+            })
+            .catch(function() {
+              location.href = getFallbackWebUrl(playUrl);
+            });
+          return;
+        }
+
+        location.href = getFallbackWebUrl(playUrl);
+      })
+      .catch(function(err) {
+        console.error('請求播放頁失敗:', err);
+        location.href = getFallbackWebUrl(playUrl);
+      });
+  }
+
+  // ===== 渲染函數 =====
   function renderTabs(active) {
     tabsEl.innerHTML = '';
     CATS.forEach(function(cat) {
@@ -583,7 +687,7 @@
 
   function renderSections(sections) {
     if (!sections || !sections.length) {
-      content.innerHTML = '<div class="empty">暂无内容</div>';
+      content.innerHTML = '<div class="empty">暫無內容</div>';
       return;
     }
     var html = '';
@@ -594,7 +698,7 @@
           '<div class="poster">' +
           (it.image ? '<img loading="lazy" referrerpolicy="no-referrer" src="' + esc(imgUrl(it.image)) + '" alt="' + esc(it.title) + '">' : '<div class="noimg">📺</div>') +
           '</div>' +
-          '<div class="meta"><div class="name">' + esc(it.title) + '</div><div class="remark">' + esc(it.remark || '点击查看详情') + '</div></div>' +
+          '<div class="meta"><div class="name">' + esc(it.title) + '</div><div class="remark">' + esc(it.remark || '點擊查看詳情') + '</div></div>' +
           '</article>';
       });
       html += '</div></section>';
@@ -610,59 +714,60 @@
     }, 50);
   }
 
-  // ===== 加载页面 =====
+  // ===== 加載頁面 =====
   function loadPage(url) {
     currentUrl = abs(url);
     renderTabs(currentUrl);
-    content.innerHTML = '<div class="empty loading">加载中…</div>';
+    content.innerHTML = '<div class="empty loading">載入中…</div>';
     reqText(currentUrl)
       .then(function(html) {
         var sections = parseList(html);
         renderSections(sections);
         var total = sections.reduce(function(sum, s) { return sum + s.items.length; }, 0);
-        setStatus('已加载 ' + total + ' 条内容');
+        setStatus('已載入 ' + total + ' 條內容');
+        setTimeout(removeAds, 300);
       })
       .catch(function(err) {
-        content.innerHTML = '<div class="empty">加载失败：' + esc(err.message) + '</div>';
-        setStatus('错误');
+        content.innerHTML = '<div class="empty">載入失敗：' + esc(err.message) + '</div>';
+        setStatus('錯誤');
       });
   }
 
-  // ===== 搜索 =====
+  // ===== 搜索（修復：空輸入時阻止原生跳轉） =====
   function search(q) {
     q = clean(q);
     if (!q) {
-      // 无关键词时跳转到搜索页（显示热门）
-      location.href = BASE + '/vodsearch.html';
-      return;
+      setStatus('請輸入搜索關鍵字');
+      return; // 阻止跳轉到原生官網搜索頁
     }
     renderTabs('');
     content.innerHTML = '<div class="empty loading">搜索中…</div>';
-    var searchUrl = BASE + '/vodsearch.html?wd=' + encodeURIComponent(q);
+    var searchUrl = BASE + '/search/-------------.html?wd=' + encodeURIComponent(q);
     reqText(searchUrl)
       .then(function(html) {
         var sections = parseList(html, q);
         if (!sections.length || !sections[0].items.length) {
-          content.innerHTML = '<div class="empty">未找到相关结果</div>';
-          setStatus('无结果：' + q);
+          content.innerHTML = '<div class="empty">未找到相關結果</div>';
+          setStatus('無結果：' + q);
           return;
         }
         sections[0].title = '搜索：' + q;
         renderSections(sections);
         setStatus('搜索完成：' + q);
+        setTimeout(removeAds, 300);
       })
       .catch(function(err) {
-        content.innerHTML = '<div class="empty">搜索失败，请重试</div>';
-        setStatus('搜索失败');
+        content.innerHTML = '<div class="empty">搜索失敗，請重試</div>';
+        setStatus('搜索失敗');
       });
   }
 
-  // ===== 打开详情浮层 =====
+  // ===== 打開詳情浮層 =====
   function openDetail(url) {
     lastFocus = document.activeElement;
     document.body.classList.add('detail-active');
     detailSheet.classList.add('active');
-    detailPanel.innerHTML = '<div class="empty loading">正在读取详情…</div>';
+    detailPanel.innerHTML = '<div class="empty loading">正在讀取詳情…</div>';
     history.pushState({ route: 'detail', url: url }, '', '#detail=' + encodeURIComponent(url));
 
     reqText(url)
@@ -672,7 +777,13 @@
 
         var fieldsHtml = '';
         data.fields.forEach(function(f) {
-          fieldsHtml += '<div><b>' + esc(f[0]) + '：</b>' + esc(f[1]) + '</div>';
+          var label = f[0];
+          var value = f[1] || '';
+          if (label && !value) {
+            fieldsHtml += '<div>' + esc(label) + '</div>';
+          } else if (label && value) {
+            fieldsHtml += '<div><b>' + esc(label) + '：</b>' + esc(value) + '</div>';
+          }
         });
 
         var linesHtml = '';
@@ -681,7 +792,7 @@
             linesHtml += '<button class="line-tab' + (idx === 0 ? ' active' : '') + '" data-sid="' + esc(ln.sid) + '">' + esc(ln.name) + '(' + ln.eps.length + ')</button>';
           });
         } else {
-          linesHtml = '<span class="line-tab active">无线路</span>';
+          linesHtml = '<span class="line-tab active">無線路</span>';
         }
 
         var firstLine = data.lines[0] || { eps: [] };
@@ -691,7 +802,7 @@
             epsHtml += '<button class="ep" data-href="' + esc(ep.href) + '">' + esc(ep.title) + '</button>';
           });
         } else {
-          epsHtml = '<div class="empty">暂无分集</div>';
+          epsHtml = '<div class="empty">暫無分集</div>';
         }
 
         detailPanel.innerHTML = 
@@ -702,15 +813,14 @@
           '<div class="detail-title">' + esc(data.title) + '</div>' +
           '<div class="detail-info">' + fieldsHtml + '</div>' +
           '</div></div>' +
-          '<div class="intro-pill">📖 简介</div>' +
+          '<div class="intro-pill">📖 簡介</div>' +
           '<p class="desc">' + esc(data.desc) + '</p>' +
-          '<div class="play-title">🎬 播放线路</div>' +
+          '<div class="play-title">🎬 播放線路</div>' +
           '<div class="line-tabs">' + linesHtml + '</div>' +
           '<div class="episodes" id="episodeBox">' + epsHtml + '</div>';
 
         document.getElementById('closeDetail').onclick = closeDetail;
 
-        // 线路切换
         detailPanel.querySelectorAll('.line-tab').forEach(function(btn) {
           btn.onclick = function() {
             detailPanel.querySelectorAll('.line-tab').forEach(function(b) { b.classList.remove('active'); });
@@ -727,35 +837,22 @@
                 b.onclick = function() { playEpisode(b.dataset.href, data.title + ' ' + b.textContent); };
               });
             } else {
-              box.innerHTML = '<div class="empty">该线路暂无分集</div>';
+              box.innerHTML = '<div class="empty">該線路暫無分集</div>';
             }
           };
         });
 
-        // 集数点击 → 跳转播放页（注入脚本接管）
         detailPanel.querySelectorAll('.ep').forEach(function(b) {
           b.onclick = function() { playEpisode(b.dataset.href, data.title + ' ' + b.textContent); };
         });
 
         document.getElementById('closeDetail').focus({ preventScroll: true });
+        setTimeout(removeAds, 200);
       })
       .catch(function(err) {
-        detailPanel.innerHTML = '<button id="closeDetail" onclick="window.__wbClose()">返回</button><div class="empty">详情加载失败：' + esc(err.message) + '</div>';
+        detailPanel.innerHTML = '<button id="closeDetail" onclick="window.__wbClose()">返回</button><div class="empty">詳情載入失敗：' + esc(err.message) + '</div>';
         document.getElementById('closeDetail').onclick = closeDetail;
       });
-  }
-
-  // ===== 播放：跳轉播放頁（優化版：自動帶上返回地址） =====
-  function playEpisode(href, title) {
-    setStatus('跳轉播放頁…');
-    
-    // 獲取當前 HTML 介面的完整 URL
-    var current = window.location.href;
-    
-    // 將當前頁面地址作為 return_url 帶入播放頁 URL 中
-    var targetUrl = href + '#return_url=' + encodeURIComponent(current);
-    
-    location.href = targetUrl;
   }
 
   function closeDetail() {
@@ -766,7 +863,7 @@
   }
   window.__wbClose = closeDetail;
 
-  // ===== 键盘事件 =====
+  // ===== 鍵盤事件 =====
   function handleKeys(e) {
     if (e.key === 'Escape' || e.key === 'Backspace') {
       if (detailSheet.classList.contains('active')) {
@@ -799,6 +896,8 @@
         loadPage(currentUrl);
       }
     });
+    watchAds();
+    setTimeout(removeAds, 100);
     loadPage(BASE + '/');
   }
 
