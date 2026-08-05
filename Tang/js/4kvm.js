@@ -4,7 +4,7 @@
 // 版本：1.1 修复搜索匹配为空问题 + 调试日志
 // ============================================================
 
-const host = 'https://www.4kvm.tv';
+const host = 'https://www.4kvms.com';
 const headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Referer": host + '/'
