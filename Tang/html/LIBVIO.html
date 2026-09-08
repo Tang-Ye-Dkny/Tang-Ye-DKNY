@@ -236,7 +236,7 @@
 (function() {
   'use strict';
 
-  var BASE = 'https://www.libvios.com';
+  var BASE = 'https://libvio.host';
   var CATS = [
     ['首頁', '/'],
     ['電影', '/type/1.html'],
@@ -258,6 +258,7 @@
   var currentUrl = BASE + '/';
   var lastFocus = null;
   var detailData = null;
+  var isClosingDetail = false;
 
   // ===== 模式切換邏輯 =====
   var urlParams = new URLSearchParams(window.location.search);
@@ -297,6 +298,7 @@
 
   // ===== 工具函數 =====
   function abs(url) {
+    if (!url) return '';
     try { return new URL(url, BASE + '/').href; } catch(e) { return url || ''; }
   }
   function esc(s) {
@@ -307,14 +309,13 @@
   function clean(s) {
     return String(s || '').replace(/\s+/g, ' ').trim();
   }
+  
+  // 修正：海報圖片直接返回標準地址，不走 fm.res 代理防止海報黑屏
   function imgUrl(u) {
     u = abs(u || '');
-    if (!u) return '';
-    if (window.fm && fm.res) {
-      try { return fm.res(u, { headers: { Referer: BASE + '/', 'User-Agent': UA } }); } catch(e) {}
-    }
     return u;
   }
+
   function setStatus(msg) {
     statusEl.textContent = msg || '';
   }
@@ -368,20 +369,43 @@
     return new DOMParser().parseFromString(html, 'text/html');
   }
 
-  // ===== 卡片提取 =====
+  // ===== 卡片提取 (修復 blank.gif 占位圖過濾) =====
   function cardFromBox(box) {
     var href = '';
-    var link = box.querySelector('a.stui-vodlist__thumb');
+    var link = box.querySelector('a.stui-vodlist__thumb') || box.querySelector('a');
     if (link) href = abs(link.getAttribute('href') || '');
-    var img = box.querySelector('img.lazyload');
+    
     var image = '';
-    if (img) {
-      image = img.getAttribute('data-original') || img.getAttribute('src') || '';
+    if (link) {
+      image = link.getAttribute('data-original') || link.getAttribute('data-src') || '';
+      if (!image) {
+        var style = link.getAttribute('style') || '';
+        var bgMatch = style.match(/background(?:-image)?\s*:\s*url\((['"]?)(.*?)\1\)/i);
+        if (bgMatch) image = bgMatch[2];
+      }
     }
+
+    if (!image || image.indexOf('blank.gif') !== -1) {
+      var img = box.querySelector('img');
+      if (img) {
+        image = img.getAttribute('data-original') || img.getAttribute('data-src') || img.getAttribute('src') || '';
+      }
+    }
+
+    if (!image || image.indexOf('blank.gif') !== -1) {
+      var anyEl = box.querySelector('[data-original]');
+      if (anyEl) image = anyEl.getAttribute('data-original') || '';
+    }
+
+    if (image.indexOf('blank.gif') !== -1) image = '';
+
     var titleEl = box.querySelector('.stui-vodlist__detail .title a') || box.querySelector('.title a');
     var title = titleEl ? clean(titleEl.textContent) : '';
+    if (!title && link) title = clean(link.getAttribute('title') || '');
+
     var remarkEl = box.querySelector('.pic-text') || box.querySelector('.pic-tag-top');
     var remark = remarkEl ? clean(remarkEl.textContent) : '';
+
     return { title: title, remark: remark, href: href, image: abs(image) };
   }
 
@@ -581,7 +605,7 @@
     observer.observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  // ===== 播放解析（修復：降級跳轉帶上 return_url 參數） =====
+  // ===== 播放解析（修復：增加 fm 存在性判斷與降級跳轉帶上 return_url 參數） =====
   function isValidVideoUrl(url) {
     if (!url || typeof url !== 'string') return false;
     return /^https?:\/\/[^\s"'<>]+\.(?:mp4|m3u8|mov|flv)/i.test(url) || url.includes('cloudcube');
@@ -626,12 +650,16 @@
         var videoUrl = extractVideoUrlFromHtml(html);
         if (videoUrl) {
           setStatus('播放中：' + title);
-          fm.play(videoUrl, title || 'LIBVIO 影片', {
-            headers: { Referer: BASE + '/', 'User-Agent': UA },
-            credentials: 'include'
-          }).catch(function() {
+          if (window.fm && typeof fm.play === 'function') {
+            fm.play(videoUrl, title || 'LIBVIO 影片', {
+              headers: { Referer: BASE + '/', 'User-Agent': UA },
+              credentials: 'include'
+            }).catch(function() {
+              location.href = getFallbackWebUrl(playUrl);
+            });
+          } else {
             location.href = getFallbackWebUrl(playUrl);
-          });
+          }
           return;
         }
 
@@ -646,7 +674,7 @@
           reqText(iframeSrc)
             .then(function(iframeHtml) {
               var iframeUrl = extractVideoUrlFromHtml(iframeHtml);
-              if (iframeUrl) {
+              if (iframeUrl && window.fm && typeof fm.play === 'function') {
                 setStatus('播放中：' + title);
                 fm.play(iframeUrl, title || 'LIBVIO 影片', {
                   headers: { Referer: BASE + '/', 'User-Agent': UA },
@@ -654,9 +682,9 @@
                 }).catch(function() {
                   location.href = getFallbackWebUrl(playUrl);
                 });
-                return;
+              } else {
+                location.href = getFallbackWebUrl(playUrl);
               }
-              location.href = getFallbackWebUrl(playUrl);
             })
             .catch(function() {
               location.href = getFallbackWebUrl(playUrl);
@@ -855,11 +883,23 @@
       });
   }
 
+  // ===== 關閉詳情 (修復：增加鎖定狀態防止重複退棧與選單卡死) =====
   function closeDetail() {
+    if (isClosingDetail) return;
+    isClosingDetail = true;
+
     document.body.classList.remove('detail-active');
     detailSheet.classList.remove('active');
-    if (location.hash.startsWith('#detail=')) history.back();
-    if (lastFocus && lastFocus.focus) setTimeout(function() { lastFocus.focus({ preventScroll: true }); }, 50);
+
+    if (location.hash.startsWith('#detail=')) {
+      history.back();
+    }
+
+    if (lastFocus && lastFocus.focus) {
+      setTimeout(function() { lastFocus.focus({ preventScroll: true }); }, 50);
+    }
+
+    setTimeout(function() { isClosingDetail = false; }, 300);
   }
   window.__wbClose = closeDetail;
 
