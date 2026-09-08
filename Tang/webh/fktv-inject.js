@@ -1,126 +1,158 @@
-(function() {
-    'use strict';
+(function () {
+  'use strict';
 
-    // 1. 確保 fm 原生對象就緒的核心 Promise
-    function whenFm() {
-        if (window.fm) return Promise.resolve(window.fm);
-        return new Promise(function(resolve) {
-            window.addEventListener('fmsdk', function() { resolve(window.fm); }, { once: true });
-        });
+  // 避免重複注入
+  if (window.__FKTV_INJECTED_V4__) return;
+  window.__FKTV_INJECTED_V4__ = true;
+
+  // 1. 標題清洗演算法
+  function getCleanTitle() {
+    try {
+      var h1 = document.querySelector('h1, h2');
+      if (h1 && h1.textContent.trim()) {
+        return h1.textContent.trim().replace(/\s+/g, ' ');
+      }
+      if (document.title) {
+        return document.title.split('-')[0].split('_')[0].trim();
+      }
+    } catch (e) {}
+    return '凡客影視';
+  }
+
+  // 2. 嚴格媒體 URL 驗證（排除 .key / .ts / .bnc 等解密與分片檔）
+  function isValidMediaUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+
+    // 強制排除分片(.ts)、解密金鑰(.key)、加密塊(.bnc)、圖片、字型與分析 API
+    if (
+      /\.(ts|key|bnc|png|jpg|jpeg|gif|webp|svg|css|js|ico|vtt|srt|json)(\?|$)/i.test(url) ||
+      /cloudflareinsights|google-analytics|hm\.baidu|eventTracking|doHistory/i.test(url)
+    ) {
+      return false;
     }
 
-    // 2. 高性能防抖調度器 (Debounce) - 防止 DOM 頻繁變化時重刷 CPU
-    var schedule = {
-        timer: null,
-        run: function(fn) {
-            clearTimeout(this.timer);
-            this.timer = setTimeout(fn, 150);
-        }
-    };
-
-    // 3. 標題清洗演算法 - 專治長尾垃圾後綴，讓 App 歷史紀錄乾乾淨淨
-    function getCleanTitle() {
-        try {
-            // 優先抓取詳情頁的影視名字 H1 或 H2
-            var h1 = document.querySelector('h1, h2');
-            if (h1 && h1.textContent.trim()) {
-                return h1.textContent.trim().replace(/\s+/g, ' ');
-            }
-            // 次選洗淨後的 document.title (切除 "- 凡客影視" 等後綴)
-            if (document.title) {
-                var rawTitle = document.title.split('-')[0].split('_')[0];
-                return rawTitle.trim();
-            }
-        } catch(e) { console.error('[fm-fktv] 標題提取出錯:', e); }
-        return '凡客影視';
+    // 只允許結尾或路徑純粹為 .m3u8 / .mp4 的主串流地址
+    var cleanPath = url.split('?')[0].toLowerCase();
+    if (cleanPath.endsWith('.m3u8') || cleanPath.endsWith('.mp4')) {
+      return true;
     }
 
-    whenFm().then(function(fm) {
-        
-        // 核心播放調用（帶有防重入與錯誤防護）
-        function triggerNativePlay(url) {
-            try {
-                if (window.__lastPlayedUrl === url) return;
-                window.__lastPlayedUrl = url;
-                
-                var cleanTitle = getCleanTitle();
-                console.log('🔥 [凡客-核心成功捕獲] 正在呼叫 Native 播放:', url);
-                
-                fm.play(url, cleanTitle, {
-                    headers: { Referer: location.href },
-                    credentials: 'include'
-                });
-            } catch(e) {
-                console.error('[fm-fktv] 呼叫 fm.play 失敗:', e);
-            }
-        }
+    return false;
+  }
 
-        // 精準媒體源過濾器 (正則優化版)
-        function isValidMediaUrl(url) {
-            if (!url || typeof url !== 'string') return false;
-            // 一律排除廣告、追蹤統計、動態代理及純圖片資源
-            if (/cloudflareinsights|google-analytics|proxy:\/\/|\.png|\.jpg|\.gif|favicon/i.test(url)) {
-                return false;
-            }
-            // 精準捕獲主流的 m3u8 與 mp4 串流
-            return url.includes('.m3u8') || url.includes('.mp4');
-        }
+  // 3. 核心調度機制
+  function triggerNativePlay(rawUrl) {
+    if (!rawUrl) return;
+    var fullUrl = rawUrl;
+    try {
+      fullUrl = new URL(rawUrl, location.href).href;
+    } catch (e) {}
 
-        // --- 策略一：動態媒體標籤嗅探 (高性能優化) ---
-        function sniffVideoTags() {
-            try {
-                var videos = document.querySelectorAll('video');
-                videos.forEach(function(video) {
-                    var src = video.currentSrc || video.src || '';
-                    if (isValidMediaUrl(src)) {
-                        triggerNativePlay(src);
-                    }
-                });
-            } catch(e) { console.error('[fm-fktv] 標籤嗅探過程崩潰:', e); }
-        }
+    // 防重複觸發
+    if (window.__lastPlayedUrl === fullUrl) return;
+    window.__lastPlayedUrl = fullUrl;
 
-        // 改造點：利用 MutationObserver + schedule 防抖聯動，替代原本高頻空轉的 300ms 定時器
-        var observer = new MutationObserver(function() {
-            schedule.run(sniffVideoTags);
+    console.log('🔥 [FKTV Inject] 成功捕獲 M3U8 主播放地址:', fullUrl);
+
+    var retryCount = 0;
+    function executePlay() {
+      var title = getCleanTitle();
+      if (window.fm && typeof window.fm.play === 'function') {
+        console.log('✅ [FKTV Inject] 正在調用 fm.play');
+        window.fm.play(fullUrl, title, {
+          headers: { Referer: location.href },
+          credentials: 'include'
         });
-        observer.observe(document.documentElement, { childList: true, subtree: true });
-
-        // 兜底守衛：將定時器放寬至 500ms 降低開銷，專治某些只換 src 屬性而不改動 DOM 結構的極端播放器
-        setInterval(sniffVideoTags, 500);
-
-
-        // --- 策略二：強效網絡層攔截 (Fetch / XHR) ---
-        try {
-            // 監聽並攔截 Fetch 請求
-            var origFetch = window.fetch;
-            window.fetch = function() {
-                try {
-                    var url = typeof arguments[0] === 'string' ? arguments[0] : (arguments[0] && arguments[0].url);
-                    if (isValidMediaUrl(url)) {
-                        console.log('[凡客攔截-Fetch] 成功截獲媒體鏈接:', url);
-                        triggerNativePlay(url);
-                    }
-                } catch(e) {}
-                return origFetch.apply(this, arguments);
-            };
-
-            // 監聽並攔截 XMLHttpRequest (XHR)
-            var origOpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function(method, url) {
-                try {
-                    if (isValidMediaUrl(url)) {
-                        console.log('[凡客攔截-XHR] 成功截獲媒體鏈接:', url);
-                        triggerNativePlay(url);
-                    }
-                } catch(e) {}
-                return origOpen.apply(this, arguments);
-            };
-        } catch (e) {
-            console.error('[fm-fktv] 網絡層攔截重寫失敗:', e);
+      } else if (window.AndroidJS && typeof window.AndroidJS.onMediaFound === 'function') {
+        window.AndroidJS.onMediaFound(fullUrl);
+      } else {
+        if (retryCount < 50) {
+          retryCount++;
+          setTimeout(executePlay, 100);
         }
+      }
+    }
 
-        // 頁面首次加載時主動對齊一次
-        sniffVideoTags();
-        console.log('✅ [fm-fktv] 凡客優化版工業級雙防線注入器已啟動');
+    executePlay();
+  }
+
+  // 4. 解析文本中的 .m3u8 (嚴格濾除 .key)
+  function checkTextForM3u8(text) {
+    if (!text || typeof text !== 'string') return;
+    var match = text.match(/https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*/i);
+    if (match && match[0] && isValidMediaUrl(match[0])) {
+      triggerNativePlay(match[0]);
+    }
+  }
+
+  // 5. 頂層網絡攔截
+  var origOpen = XMLHttpRequest.prototype.open;
+  var origSend = XMLHttpRequest.prototype.send;
+
+  XMLHttpRequest.prototype.open = function (method, url) {
+    if (isValidMediaUrl(url)) {
+      triggerNativePlay(url);
+    }
+    return origOpen.apply(this, arguments);
+  };
+
+  XMLHttpRequest.prototype.send = function () {
+    this.addEventListener('load', function () {
+      try {
+        if (this.responseText) {
+          checkTextForM3u8(this.responseText);
+        }
+      } catch (e) {}
     });
+    return origSend.apply(this, arguments);
+  };
+
+  var origFetch = window.fetch;
+  window.fetch = function (input, init) {
+    var url = typeof input === 'string' ? input : (input && input.url);
+    if (isValidMediaUrl(url)) {
+      triggerNativePlay(url);
+    }
+
+    return origFetch.apply(this, arguments).then(function (response) {
+      try {
+        var clone = response.clone();
+        clone.text().then(function (text) {
+          checkTextForM3u8(text);
+        });
+      } catch (e) {}
+      return response;
+    });
+  };
+
+  var origPlay = HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play = function () {
+    var src = this.currentSrc || this.src;
+    if (isValidMediaUrl(src)) {
+      triggerNativePlay(src);
+    }
+    return origPlay.apply(this, arguments);
+  };
+
+  function sniffVideo() {
+    try {
+      var videos = document.querySelectorAll('video');
+      videos.forEach(function (v) {
+        var src = v.currentSrc || v.src;
+        if (isValidMediaUrl(src)) {
+          triggerNativePlay(src);
+        }
+      });
+    } catch (e) {}
+  }
+
+  var observer = new MutationObserver(sniffVideo);
+  if (document.documentElement) {
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  setInterval(sniffVideo, 500);
+  sniffVideo();
+
+  console.log('✅ [FKTV Inject V4] 已啟動 (加強過濾 .key 解密檔與分片資源)');
 })();

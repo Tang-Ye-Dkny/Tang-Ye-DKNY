@@ -1,11 +1,12 @@
 (function() {
     'use strict';
 
-    // 1. 確保 fm SDK 就緒
+    // 1. 確保 fm SDK 就緒（加入 1.5 秒超時降級，防止非 WebHTV/FongMi 環境下全域卡死）
     function whenFm() {
         if (window.fm) return Promise.resolve(window.fm);
         return new Promise(function(resolve) {
             window.addEventListener('fmsdk', function() { resolve(window.fm); }, { once: true });
+            setTimeout(function() { resolve(window.fm || null); }, 1500);
         });
     }
 
@@ -19,7 +20,7 @@
     };
 
     whenFm().then(function(fm) {
-        const BASE = 'https://www.libvios.com';
+        const BASE = 'https://libvio.host';
 
         // 清理與驗證直連網址
         function cleanVideoUrl(url) {
@@ -35,9 +36,16 @@
 
         function tryDecodeBase64(str) {
             try {
-                if (!/^[A-Za-z0-9+/=]+$/.test(str)) return null;
-                const decoded = atob(str);
+                let decoded = atob(str);
                 if (isValidVideoUrl(decoded)) return decoded;
+                try {
+                    let unescaped = unescape(decoded);
+                    if (isValidVideoUrl(unescaped)) return unescaped;
+                } catch(e){}
+                try {
+                    let uriDecoded = decodeURIComponent(decoded);
+                    if (isValidVideoUrl(uriDecoded)) return uriDecoded;
+                } catch(e){}
                 return null;
             } catch(e) { return null; }
         }
@@ -59,27 +67,31 @@
             return null;
         }
 
-        // 點擊劇集時的非同步處理
+        // 劇集點擊播放與靜態解析
         async function playEpisode(episodeUrl, title) {
             try {
-                const response = await fm.req(episodeUrl, {
-                    method: 'GET',
-                    headers: {
-                        'User-Agent': navigator.userAgent,
-                        'Referer': BASE + '/'
-                    },
-                    responseType: 'text',
-                    timeout: 10
-                });
+                if (window.fm && typeof fm.req === 'function') {
+                    const response = await fm.req(episodeUrl, {
+                        method: 'GET',
+                        headers: {
+                            'User-Agent': navigator.userAgent,
+                            'Referer': BASE + '/'
+                        },
+                        responseType: 'text',
+                        timeout: 10
+                    });
 
-                if (response.ok) {
-                    let videoUrl = extractVideoUrl(response.body);
-                    if (videoUrl && isValidVideoUrl(videoUrl)) {
-                        console.log('✅ [fm-ext] 靜態命中明文直連網址:', videoUrl);
-                        await fm.play(videoUrl, title || 'LIBVIO 視頻', {
-                            headers: { 'Referer': BASE + '/', 'User-Agent': navigator.userAgent }
-                        });
-                        return;
+                    if (response.ok) {
+                        let videoUrl = extractVideoUrl(response.body);
+                        if (videoUrl && isValidVideoUrl(videoUrl)) {
+                            console.log('✅ [fm-ext] 靜態命中明文直連網址:', videoUrl);
+                            if (window.fm && typeof fm.play === 'function') {
+                                await fm.play(videoUrl, title || 'LIBVIO 視頻', {
+                                    headers: { 'Referer': BASE + '/', 'User-Agent': navigator.userAgent }
+                                });
+                                return;
+                            }
+                        }
                     }
                 }
 
@@ -99,6 +111,7 @@
                 const iframeDoc = iframe.contentDocument || iframeWindow?.document;
                 if (!iframeWindow || !iframeDoc) return null;
 
+                // 1. DOM Video 標籤檢測
                 const video = iframeDoc.querySelector('video');
                 if (video && video.src && /^https?:/i.test(video.src) && !video.src.includes('blob:')) {
                     return video.src;
@@ -108,6 +121,15 @@
                     return source.src;
                 }
 
+                // 2. 常見播放器物件變數探查 (DPlayer, ArtPlayer, Xgplayer 等)
+                if (iframeWindow.dp && iframeWindow.dp.video && iframeWindow.dp.video.src && isValidVideoUrl(iframeWindow.dp.video.src)) {
+                    return iframeWindow.dp.video.src;
+                }
+                if (iframeWindow.art && iframeWindow.art.url && isValidVideoUrl(iframeWindow.art.url)) {
+                    return iframeWindow.art.url;
+                }
+
+                // 3. Performance API 網路請求攔截探查
                 if (iframeWindow.performance && typeof iframeWindow.performance.getEntriesByType === 'function') {
                     const entries = iframeWindow.performance.getEntriesByType('resource');
                     for (let i = 0; i < entries.length; i++) {
@@ -118,6 +140,7 @@
                     }
                 }
 
+                // 4. 全域變數探查
                 if (iframeWindow.urls && typeof iframeWindow.urls === 'string' && isValidVideoUrl(iframeWindow.urls)) {
                     return iframeWindow.urls;
                 }
@@ -156,12 +179,14 @@
                     iframe.style.setProperty('display', 'none', 'important');
 
                     const title = document.querySelector('h1.title')?.textContent?.trim() || document.title.split('-')[0].trim();
-                    fm.play(finalVideoUrl, title, {
-                        headers: {
-                            'Referer': BASE + '/',
-                            'User-Agent': navigator.userAgent
-                        }
-                    });
+                    if (window.fm && typeof fm.play === 'function') {
+                        fm.play(finalVideoUrl, title, {
+                            headers: {
+                                'Referer': BASE + '/',
+                                'User-Agent': navigator.userAgent
+                            }
+                        });
+                    }
                     return;
                 }
 
@@ -172,20 +197,17 @@
             }, 300);
         }
 
-        // 【新增】強效去廣告與發佈頁清理函數
+        // 強效去廣告與發佈頁清理函數
         function cleanAds() {
-            // 1. 強制移除中央發佈頁通知彈窗
             const notePopup = document.getElementById('note');
             if (notePopup) {
                 notePopup.style.setProperty('display', 'none', 'important');
                 if (typeof notePopup.remove === 'function') notePopup.remove();
             }
 
-            // 2. 移除橫幅廣告及其帶有隨機隨機 ID 的外層包裹容器
             const adIndicators = document.querySelectorAll('.t-img-box, .a_ms, .x-box');
             adIndicators.forEach(function(el) {
                 let targetNode = el;
-                // 向上追溯包裹層，直到最外層的動態 ID Div（不破壞主結構 container 即可）
                 if (targetNode && targetNode.parentElement && 
                     targetNode.parentElement.tagName !== 'BODY' && 
                     !targetNode.parentElement.classList.contains('container') &&
@@ -204,7 +226,6 @@
 
         // 掃描當前頁面的有效副線路播放器與廣告大掃除
         function scanPagePlayers() {
-            // 每次 DOM 變化時，同步執行廣告大掃除
             cleanAds();
 
             if (window.self !== window.top) return;
@@ -261,7 +282,7 @@
             }, true);
         }
 
-        // 【新增】毫秒級 CSS 阻斷（防止廣告加載時閃爍出現）
+        // 毫秒級 CSS 阻斷（防止廣告加載時閃爍出現）
         function injectAdBlockStyle() {
             const style = document.createElement('style');
             style.textContent = `
@@ -281,19 +302,14 @@
 
         // 初始化
         function init() {
-            // 1. 率先注入 CSS 實現零閃爍視覺隱藏
             injectAdBlockStyle();
-
-            // 2. 攔截劇集點擊行為
             interceptClicks();
 
-            // 3. 註冊全自動 DOM 監聽器（確保動態載入的廣告與副線路無處遁形）
             var observer = new MutationObserver(function() {
                 schedule.run(scanPagePlayers);
             });
             observer.observe(document.documentElement, { childList: true, subtree: true });
 
-            // 4. 首次進入全量掃描
             scanPagePlayers();
             console.log('🎉 [fm-ext] LIBVIO 終極穿透 + 全能淨化去廣告版部署成功！');
         }
@@ -305,68 +321,42 @@
         }
     });
 
-    // ===== 独立返回按钮模块（真实网站全局常驻） =====
+    // ===== 獨立返回按鈕模組 =====
     (function() {
-        // 只在 libvios.com 真实网站执行
-        if (window.location.hostname.indexOf('libvios.com') === -1) return;
-
-        // 避免重复添加
+        if (window.location.hostname.indexOf('libvio.host') === -1) return;
         if (document.getElementById('fmBackButton')) return;
 
-        console.log('[返回键] 模块启动，当前 URL:', window.location.href);
-
-        // 获取返回地址（多种来源）
         function getReturnUrl() {
-            // 1. 优先从 sessionStorage 读取（之前保存的）
             var stored = sessionStorage.getItem('libvio_return_url');
-            if (stored) {
-                console.log('[返回键] 从 sessionStorage 获取返回地址:', stored);
-                return stored;
-            }
+            if (stored) return stored;
 
-            // 2. 从 URL 查询参数获取
             var urlParams = new URLSearchParams(window.location.search);
             var paramUrl = urlParams.get('return_url');
-            if (paramUrl) {
-                console.log('[返回键] 从 URL 参数获取返回地址:', paramUrl);
-                return paramUrl;
-            }
+            if (paramUrl) return paramUrl;
 
-            // 3. 从 URL hash 获取
             var hash = window.location.hash;
             if (hash && hash.startsWith('#return_url=')) {
                 try {
-                    var hashUrl = decodeURIComponent(hash.substring('#return_url='.length));
-                    console.log('[返回键] 从 hash 获取返回地址:', hashUrl);
-                    return hashUrl;
+                    return decodeURIComponent(hash.substring('#return_url='.length));
                 } catch(e) {}
             }
 
-            // 4. 从 referrer 获取（如果是从自定义界面跳转来的）
             if (document.referrer && document.referrer.indexOf(window.location.hostname) === -1) {
                 var ref = document.referrer;
-                console.log('[返回键] 从 referrer 获取返回地址:', ref);
-                // 确保返回地址包含 mode=html
                 if (ref.indexOf('mode=') === -1) {
                     ref += (ref.indexOf('?') === -1 ? '?' : '&') + 'mode=html';
                 }
                 return ref;
             }
 
-            console.log('[返回键] 未检测到返回地址');
             return null;
         }
 
         var returnUrl = getReturnUrl();
-        if (!returnUrl) {
-            console.log('[返回键] 没有返回地址，不添加按钮。');
-            return;
-        }
+        if (!returnUrl) return;
 
-        // 存入 sessionStorage 供后续页面使用
         sessionStorage.setItem('libvio_return_url', returnUrl);
 
-        // 确保 DOM 就绪后再添加按钮
         function addButton() {
             if (!document.body) {
                 setTimeout(addButton, 50);
@@ -400,22 +390,16 @@
             btn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.75)'; };
             btn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.55)'; };
             btn.onclick = function() {
-                // 清除存储，避免下次误用（但也可以保留，看需求）
-                // sessionStorage.removeItem('libvio_return_url');
                 window.location.href = returnUrl;
             };
 
             document.body.appendChild(btn);
-            console.log('[返回键] ✅ 已添加返回按钮，返回地址:', returnUrl);
         }
 
-        // 立即尝试，如果 body 未就绪则等待
         if (document.body) {
             addButton();
         } else {
             document.addEventListener('DOMContentLoaded', addButton);
         }
     })();
-    // ===== 返回按钮模块结束 ======
-
 })();
