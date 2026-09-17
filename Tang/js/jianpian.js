@@ -38,6 +38,23 @@ function fixPic(path) {
 }
 
 /**
+ * 清洗播放 URL，提取 ref= 参数中的直连 MP4/M3U8 地址
+ */
+function cleanPlayUrl(url) {
+    if (!url) return '';
+    if (url.includes('ref=')) {
+        let match = url.match(/ref=([^\s&]+)/i);
+        if (match && match[1]) {
+            let decoded = decodeURIComponent(match[1]);
+            if (decoded.startsWith('http')) {
+                return decoded;
+            }
+        }
+    }
+    return url;
+}
+
+/**
  * 初始化配置与域名探测
  */
 async function init(cfg) {
@@ -208,7 +225,7 @@ async function detail(id) {
             if (data.playlist && Array.isArray(data.playlist)) {
                 let subUrls = data.playlist
                     .filter(item => item.url)
-                    .map(item => `${item.title || '正片'}$${item.url}`);
+                    .map(item => `${item.title || '正片'}$${cleanPlayUrl(item.url)}`);
                 if (subUrls.length > 0) {
                     playFromList.push('常规线路');
                     playUrlList.push(subUrls.join('#'));
@@ -236,6 +253,8 @@ async function detail(id) {
                             if (playUrl) {
                                 if (playUrl.startsWith('ftp')) {
                                     playUrl = `tvbox-xg:${playUrl}`;
+                                } else {
+                                    playUrl = cleanPlayUrl(playUrl);
                                 }
                                 subUrls.push(`${item.source_name || '播放'}$${playUrl}`);
                             }
@@ -288,20 +307,14 @@ async function search(wd, quick) {
 }
 
 /**
- * 播放链接解析
+ * 播放链接解析（全量强制直连 parse: 0）
  */
 async function play(flag, id, flags) {
     try {
-        if (id.startsWith('http')) {
-            return JSON.stringify({
-                parse: 1,
-                jx: '1',
-                url: id
-            });
-        }
+        let realPlayUrl = cleanPlayUrl(id);
         return JSON.stringify({
             parse: 0,
-            url: id
+            url: realPlayUrl
         });
     } catch (e) {
         return JSON.stringify({ parse: 0, url: id });
