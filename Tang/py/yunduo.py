@@ -302,11 +302,15 @@ class Spider(_BaseSpider):
 
     # ---------- 详情 ----------
 
+    # ---------- 详情（增强版：加入网页端聚合线路） ----------
+
     def detailContent(self, ids):
         if not self.host:
             return {"list": []}
         try:
             vod_id = str(ids[0]) if isinstance(ids, (list, tuple)) else str(ids)
+            
+            # 1. 獲取基礎詳情 (APP端原有線路)
             r = self.session.get(
                 self.api_base + "/vod/get_detail?vod_id=" + vod_id,
                 headers=self._headers_json(), timeout=15)
@@ -329,7 +333,10 @@ class Spider(_BaseSpider):
                 if p.get("from"):
                     line_map[p["from"]] = p.get("show") or p["from"]
 
-            play_from_list, play_url_list = [], []
+            # 使用字典來收集線路，方便後續合併去重（線路名稱 -> 劇集列表字串）
+            play_dict = {}
+
+            # 解析基礎線路
             if from_str and url_str:
                 from_arr = from_str.split("$$$")
                 url_arr = url_str.split("$$$")
@@ -343,10 +350,57 @@ class Spider(_BaseSpider):
                             token = "token@" + parts[1] + "@" + raw_from
                             eps.append(parts[0] + "$" + token)
                     if eps:
-                        play_from_list.append(line_name)
-                        play_url_list.append("#".join(eps))
+                        play_dict[line_name] = "#".join(eps)
 
-            # 兜底：detail_v2
+            # 2. 獲取網頁端聚合線路 (優酷、騰訊、CO藍光等)
+            try:
+                # 偽裝成網頁端的請求頭，並攜帶 Referer
+                web_headers = self._headers_json()
+                web_headers["User-Agent"] = self.DEFAULT_UA
+                web_headers["Referer"] = self.host + "/play/" + vod_id
+                
+                r_agg = self.session.get(
+                    self.api_base + "/internal/search_aggregate?vod_id=" + vod_id,
+                    headers=web_headers, timeout=15)
+                
+                if r_agg.status_code == 200 and r_agg.text:
+                    agg_obj = r_agg.json()
+                    if agg_obj.get("code") == 200 and agg_obj.get("data"):
+                        agg_data = agg_obj["data"]
+                        # 兼容返回結構：可能是 {"list": [...]} 或直接就是 [...]
+                        agg_list = agg_data if isinstance(agg_data, list) else agg_data.get("list", [])
+                        
+                        for item in agg_list:
+                            # 根據常見結構提取 from 和 url
+                            raw_from = item.get("vod_play_from") or item.get("from") or ""
+                            raw_url = item.get("vod_play_url") or item.get("url") or ""
+                            
+                            if raw_from and raw_url:
+                                # 如果有多個來源用 $$$ 分割
+                                f_arr = raw_from.split("$$$")
+                                u_arr = raw_url.split("$$$")
+                                for j in range(min(len(f_arr), len(u_arr))):
+                                    agg_line_name = f_arr[j]
+                                    # 解析聚合線路的劇集
+                                    agg_eps = []
+                                    for ep in u_arr[j].split("#"):
+                                        parts = ep.split("$")
+                                        if len(parts) == 2 and parts[1]:
+                                            token = "token@" + parts[1] + "@" + agg_line_name
+                                            agg_eps.append(parts[0] + "$" + token)
+                                    if agg_eps:
+                                        # 避免覆蓋 APP 端已有的同名線路（例如 CO藍光），可以加個後綴或直接去重
+                                        if agg_line_name not in play_dict:
+                                            play_dict[agg_line_name] = "#".join(agg_eps)
+            except Exception as e:
+                # 聚合接口失敗不影響基礎線路播放
+                pass
+
+            # 將字典轉換回列表格式
+            play_from_list = list(play_dict.keys())
+            play_url_list = list(play_dict.values())
+
+            # 3. 兜底：detail_v2 (如果前面都沒拿到任何線路)
             if not play_from_list:
                 try:
                     r2 = self.session.get(
