@@ -186,17 +186,8 @@ class Spider(BaseSpider):
 
         # === 优化：全量抓取所有线路与对应剧集（支援超过10条以上线路） ===
         line_map = {}
-        line_name_map = {}
 
-        # 1. 尝试抓取所有线路面板的名称標籤
-        source_items = soup.select('.source-item')
-        for idx, item in enumerate(source_items):
-            label_tag = item.select_one('.source-item-label')
-            if label_tag:
-                # 順序或對應線路名稱
-                pass
-
-        # 2. 抓取所有包含 /play/ 的播放連結，並建立完整對應
+        # 抓取所有包含 /play/ 的播放連結，並建立完整對應[cite: 20]
         all_episodes = soup.select('a[href*="/play/"]')
         for ep in all_episodes:
             href = ep.get('href', '')
@@ -210,7 +201,7 @@ class Spider(BaseSpider):
                 
                 if line_id not in line_map:
                     line_map[line_id] = []
-                # 避免重複加入相同的集數
+                
                 item_str = f"{ep_name}${self.host}{href}"
                 if item_str not in line_map[line_id]:
                     line_map[line_id].append(item_str)
@@ -218,10 +209,22 @@ class Spider(BaseSpider):
         play_from_list = []
         play_url_list = []
         for line_id, eps in line_map.items():
-            # 自動對應帶有線路編號的名稱
-            line_name = f"线路{line_id}"
-            play_from_list.append(line_name)
-            play_url_list.append("#".join(eps))
+            # 智能過濾頂部 banner 的「立即播放」按鈕重複項，保留正常集數
+            has_other_eps = len([e for e in eps if not e.startswith("立即播放") and not e.startswith("播放")]) > 0
+            cleaned_eps = []
+            for ep_str in eps:
+                name, url_path = ep_str.split('$', 1)
+                if name in ["立即播放", "播放"]:
+                    if has_other_eps:
+                        continue  # 若已有正常集數，直接跳過重複的立即播放按鈕
+                    else:
+                        name = "正片"  # 若為單集電影無其他集數，則轉正為正片
+                cleaned_eps.append(f"{name}${url_path}")
+            
+            if cleaned_eps:
+                line_name = f"线路{line_id}"
+                play_from_list.append(line_name)
+                play_url_list.append("#".join(cleaned_eps))
 
         if not play_from_list:
             play_from_list.append("默认线路")
