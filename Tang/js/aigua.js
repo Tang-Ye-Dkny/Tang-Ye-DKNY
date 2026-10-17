@@ -1,6 +1,6 @@
 /**
- * 愛瓜TV FongMi JS0 接口源 (電影播放修復版)
- * 适配 FongMi TVBox 最新 JS 規範
+ * 愛瓜TV FongMi JS0 接口源 (極速輕量原版 - 超快線路優先)
+ * 保持最穩定的搜尋與播放機制，不花俏、好搜好播
  */
 
 const HOST = 'https://aigua8.com';
@@ -109,7 +109,7 @@ async function category(tid, pg, filter, extend = {}) {
 }
 
 /**
- * 詳情頁 (含電影與連續劇的多層級劇集 ID 提取)
+ * 詳情頁 (含電影與連續劇的多層級劇集 ID 提取，超快線路優先)
  */
 async function detail(id) {
     const url = `${HOST}/video/detail?video_id=${id}`;
@@ -157,11 +157,18 @@ async function detail(id) {
             }
         }
 
+        // 調整預設線路順序：讓超快線路 (21) 排在前面，普快線路 (1) 排在後面[cite: 21]
         if (lines.length === 0) {
             lines = [
-                { source_id: '1', name: '普快線路' },
-                { source_id: '21', name: '超快線路' }
+                { source_id: '21', name: '超快線路' },
+                { source_id: '1', name: '普快線路' }
             ];
+        } else {
+            lines.sort((a, b) => {
+                if (a.name.includes('超快')) return -1;
+                if (b.name.includes('超快')) return 1;
+                return 0;
+            });
         }
 
         // 劇集/選集解析 (三重提取機制)
@@ -222,8 +229,7 @@ async function detail(id) {
             vod_pic: pic,
             vod_remarks: remark,
             vod_content: desc,
-            vod_play_from: playFromArr.join('$$$'),
-            vod_play_url: playUrlArr.join('$$$')
+            vod_play_from: playFromArr.join('$$$'), vod_play_url: playUrlArr.join('$$$')
         };
 
         return JSON.stringify({ list: [vod] });
@@ -309,7 +315,7 @@ async function play(flag, id, flags) {
         const parts = id.split('@');
         const videoId = parts[0];
         const chapterId = parts[1];
-        const sourceId = parts[2] || '1';
+        const sourceId = parts[2] || '21'; // 預設優先走超快線路[cite: 21]
 
         const apiUrl = `${HOST}/video/play-url?videoId=${videoId}&chapterId=${chapterId}&sourceId=0&citycode=HKG`;
         const res = await req(apiUrl, { headers });
